@@ -4,10 +4,9 @@ Paste the block between the `=== PROMPT START/END ===` markers into your
 scheduled routine (the one connected to this GitHub repo). It's written for a
 Claude Code agent that runs once per day against this repository.
 
-**Connectors the scheduled agent needs** (add these under the routine's
-**Connectors** section — a scheduled routine has no mid-run approval prompts, so
-anything not added up front is blocked):
-- **Notion** (required) — the tracker.
+**Connectors the scheduled agent needs** (add under the routine's **Connectors**
+tab — a scheduled routine has no mid-run approval prompts, so anything not added
+up front is blocked):
 - **Indeed** and/or **ZipRecruiter** (required for sourcing) — these return real
   postings *with full job descriptions*. Plain Web Search only returns aggregator
   listing pages without usable descriptions, which the routine must skip.
@@ -15,11 +14,23 @@ anything not added up front is blocked):
 - **Google Drive/Docs** (optional) — if available, also saves the docs as Google
   Docs and links them; otherwise the resume + cover letter live in the Notion page body.
 
-**One-time setup:** make sure the agent's Notion connector can see your
-**Job Scout** database (share it / pick it). The database is:
-`https://www.notion.so/12f8659e3a914ff88adf2b6d4020e8a0`
-(database id `12f8659e3a914ff88adf2b6d4020e8a0`). No API keys or `.env` needed —
-the routine is Claude Code with connectors and reads this repo directly.
+**Notion is reached via the Notion API + a token, NOT the connector** — this is
+deterministic and avoids the connector approval gate.
+
+**One-time setup (Notion API token):**
+1. Create a Notion **internal integration** at https://www.notion.so/my-integrations
+   → *New integration* → *Internal* → copy its **Internal Integration Secret**.
+2. **Share the Job Scout database with the integration:** open the database in
+   Notion → top-right **•••** → **Connections** → add your integration. (Without
+   this, the API returns `object_not_found`.)
+3. In the routine: **Edit routine → Environment → Variables** → add
+   `NOTION_TOKEN` = the secret. (It's a secret — never commit it to the repo.)
+4. **Edit routine → Environment → Network access → Custom** → add
+   `api.notion.com` to **Allowed domains** (keep the default list checked).
+
+The database is `https://www.notion.so/12f8659e3a914ff88adf2b6d4020e8a0`
+(id `12f8659e3a914ff88adf2b6d4020e8a0`). The routine reads `NOTION_TOKEN` from the
+environment and calls the Notion API directly with `curl`.
 
 ---
 
@@ -85,11 +96,21 @@ For each candidate, compute a stable **job_id** exactly as `job_scout/ingest_job
   `job_id = "key_" + first16(sha256(company|title|first200charsOfDescription))`,
   all lowercased.
 
-Search the **Job Scout** Notion database for a page whose **Job ID** property
-equals this value.
-- **If it exists:** skip the job (it’s a duplicate). Optionally update its
-  **Last Seen** to now. Do not regenerate docs.
-- **If it doesn’t exist:** it’s new — continue.
+Query the **Job Scout** database via the **Notion API** (token in `$NOTION_TOKEN`)
+for a page whose **Job ID** equals this value:
+
+```bash
+curl -s https://api.notion.com/v1/databases/12f8659e3a914ff88adf2b6d4020e8a0/query \
+  -H "Authorization: Bearer $NOTION_TOKEN" \
+  -H "Notion-Version: 2022-06-28" \
+  -H "Content-Type: application/json" \
+  -d '{"filter":{"property":"Job ID","rich_text":{"equals":"<job_id>"}},"page_size":1}'
+```
+
+- **If `results` is non-empty:** duplicate — skip it, and PATCH its **Last Seen**
+  to now: `PATCH https://api.notion.com/v1/pages/<results[0].id>` with body
+  `{"properties":{"Last Seen":{"date":{"start":"<ISO now>"}}}}`. Do not regenerate docs.
+- **If `results` is empty:** it’s new — continue.
 
 ## Step 3 — For up to 3 new jobs, draft tailored documents
 For each new job (newest / best-matched first):
@@ -115,23 +136,42 @@ primary, always-available store — you review them right inside Notion.
 - `Jarrett Goodwin — {Company} — {Job Title} — Cover Letter`
 and put their share URLs in the Resume Doc / Cover Letter Doc properties.
 
-## Step 5 — Log to the Notion tracker
-Create one page per processed job in the **Job Scout** database with:
+## Step 5 — Log to the Notion tracker (Notion API)
+Create one page per processed job via `POST https://api.notion.com/v1/pages`
+(same auth headers as Step 2). Set `parent` to
+`{"database_id":"12f8659e3a914ff88adf2b6d4020e8a0"}` and these **properties**
+(types in parens must match exactly):
 - **Name** (title) = `{Company} — {Job Title}`
-- **Job ID** = the computed job_id (future runs dedup against this)
-- **Company**, **Job Title**, **Location**
-- **Source** = `board`
-- **Status** = `needs_review`
-- **Job URL** = the posting URL
-- **Posted Date** = if known
-- **Resume Doc** / **Cover Letter Doc** = the Google Doc URLs if you made them (else leave blank — the text is already in the page body)
-- **Raw Description** = the full JD text (so it can be re-tailored later)
-- **Notes** = a one-line “why this matched” + today’s date
-- **First Seen** / **Last Seen** = now
-- **Page body** = the tailored resume and cover letter from Step 4.
+- **Job ID** (rich_text) = the computed job_id
+- **Company**, **Job Title**, **Location** (rich_text)
+- **Source** (select) = `board`
+- **Status** (select) = `needs_review`
+- **Job URL** (url) = the posting URL
+- **Posted Date** (date) = `{"start":"YYYY-MM-DD"}` if known
+- **Resume Doc** / **Cover Letter Doc** (url) = the Google Doc URLs if you made
+  them, else omit (the text is in the page body)
+- **Raw Description** (rich_text) = the full JD text
+- **Notes** (rich_text) = one-line “why this matched” + today’s date
+- **First Seen** / **Last Seen** (date) = now (ISO)
 
-For any extra new jobs beyond the cap of 3, create a page with **Status** = `new`
-and the Raw Description, but no docs.
+Put the tailored **resume** and **cover letter** in the page **body** via the
+`children` array (heading + paragraph blocks).
+
+**Notion limit:** every rich_text string is capped at **2000 characters**. For
+the Raw Description and the body text, split long content into multiple rich_text
+objects / multiple blocks of ≤2000 chars each — never send a single >2000-char string.
+
+```bash
+# Build page.json = { "parent": {...}, "properties": {...}, "children": [...] }
+curl -s https://api.notion.com/v1/pages \
+  -H "Authorization: Bearer $NOTION_TOKEN" \
+  -H "Notion-Version: 2022-06-28" \
+  -H "Content-Type: application/json" \
+  -d @page.json
+```
+
+For any extra new jobs beyond the cap of 3, create a page the same way with
+**Status** = `new` and the Raw Description, but no resume/cover-letter body.
 
 ## Step 6 — Repo changes
 This routine reads from the repo but writes only to Notion (and optionally Google

@@ -31,11 +31,13 @@ review UX** — a board grouped by status, the resume + cover letter right in th
 page body, and one-click status changes are exactly what the daily review loop
 needs.
 
-The daily routine runs as a **Claude Code agent with the Notion connector**, so
-it reads/writes the database directly — no API keys or custom Notion code. The
-`JsonFileTracker` in `tracker.ts` is only a local-testing convenience for the
-standalone scripts. The Google Sheets header row below is kept as an alternative
-if you ever change your mind.
+The daily routine reads/writes the database via the **Notion API** using an
+integration token (`NOTION_TOKEN`, set as a routine environment variable — see
+`ROUTINE_PROMPT.md`). We use the API rather than the managed Notion connector
+because the connector's approval gate blocks unattended routine runs; the token
+path is deterministic. The `JsonFileTracker` in `tracker.ts` is only a
+local-testing convenience for the standalone scripts. The Google Sheets header
+row below is kept as an alternative if you ever change your mind.
 
 ### Fields (single source of truth — matches `types.ts` `JobRecord`)
 
@@ -312,16 +314,19 @@ job_scout/
 
 ## Activate it (minimum real-world steps)
 
-1. **Build the Notion database.** Create it with the Stage 1 properties + views.
-   Make sure your Claude Code **Notion connector** can see it (share / select it).
-2. **Resume + story bank** — already filled in with your real content
-   (`base_resume.json`, `story_bank.json`). Tweak anytime; the routine reads them
-   from the repo each run.
-3. **Enable connectors on the scheduled routine:** Notion + Web Search (required),
-   Google Drive/Docs (optional, for linked Google Docs).
-4. **Paste [`ROUTINE_PROMPT.md`](./ROUTINE_PROMPT.md)** into the routine and set it
-   to run once per day. Edit the criteria lines in that file to change what it hunts.
-5. **Use the loop.** Each morning: open the `Needs Review` board view → read the
+1. **Build the Notion database** with the Stage 1 properties + views.
+2. **Notion API token:** create an internal integration
+   (notion.so/my-integrations), **share the database with it**, and set its secret
+   as the routine env var `NOTION_TOKEN`. Add `api.notion.com` to the routine's
+   allowed domains. (Full steps in `ROUTINE_PROMPT.md`.)
+3. **Resume + story bank** — already filled in with your real content
+   (`base_resume.json`, `story_bank.json`). The routine reads them from the repo each run.
+4. **Enable connectors on the scheduled routine:** Indeed and/or ZipRecruiter +
+   Web Search (sourcing), Google Drive/Docs (optional, for linked Google Docs).
+   (Notion is handled by the token above, not a connector.)
+5. **Paste [`ROUTINE_PROMPT.md`](./ROUTINE_PROMPT.md)** into the routine (or point
+   the routine at it) and set it to run once per day.
+6. **Use the loop.** Each morning: open the `Needs Review` board view → read the
    resume + cover letter in each job's page → set **Status = approved** for the
    ones to pursue → apply by hand → set **Status = applied**.
 
