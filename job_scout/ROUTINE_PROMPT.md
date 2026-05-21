@@ -8,8 +8,10 @@ Claude Code agent that runs once per day against this repository.
 - **Web Search + Web Fetch** (required, built-in) — Web Search discovers postings;
   **Web Fetch retrieves each posting's full job-description text**. Both run through
   Anthropic, so they work regardless of the sandbox network allowlist.
-- **Indeed / ZipRecruiter connectors** (optional) — use them for sourcing if they're
-  available in your environment; if not, Web Search + Web Fetch covers it.
+- **Indeed / ZipRecruiter connectors** (optional) — use them **only if already
+  authenticated**. **Never trigger a connector OAuth/login flow during a run** (it
+  can't be completed unattended and trips the registration rate limit). If they
+  aren't authenticated, just use Web Search + Web Fetch.
 - **Google Drive/Docs** (optional) — for linked Google Docs; otherwise the resume +
   cover letter live in the Notion page body.
 
@@ -62,9 +64,10 @@ Read these files from the repo:
 
 ## Step 1 — Find candidate jobs (Web Search + Web Fetch)
 Use **Web Search** to discover **newly posted** roles matching these criteria
-(recency is a hard rule — see below). If the **Indeed/ZipRecruiter connectors**
-are available in your environment, prefer them; otherwise Web Search is the
-discovery path.
+(recency is a hard rule — see below). **Do not attempt to authenticate any
+connector.** If the **Indeed/ZipRecruiter connectors** are already authenticated,
+you may use them; if a connector call returns an auth / OAuth / registration
+error, immediately fall back to Web Search and do not retry the auth.
 - **Roles:** Process Engineer, Chemical Engineer, and closely related
   (process/manufacturing/sustainability/quality engineering). Include
   junior / new-grad / EIT level — Jarrett is a final-year dual-degree student.
@@ -88,7 +91,8 @@ location, posted date) — Web Fetch runs through Anthropic, so it works even th
 the sandbox blocks direct outbound hosts. **Skip any posting whose full
 description you cannot fetch** (never fabricate one). Prefer direct
 employer/career-page or Indeed posting URLs over redirect/aggregator search pages.
-If the job connectors are available, you may use their detail calls instead.
+If the job connectors are already authenticated, you may use their detail calls
+instead — but never to authenticate or re-authenticate them.
 
 Collect up to ~10 candidates, each with: company, job title, location, job URL,
 posted date (if shown), and the full job-description text.
