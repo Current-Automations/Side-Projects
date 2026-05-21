@@ -54,6 +54,9 @@ files to the repo. Work in clear, serial steps. Be concise.
   `job_scout/story_bank.json`. Do not invent employers, dates, metrics, or skills.
 - Process at most **3 new jobs** this run. If you find more, log the rest as
   `new` (no docs) and note they’ll be picked up tomorrow.
+- **Honor the location + freshness gates strictly** (Step 1): only Canadian
+  (Ontario / GTA / Durham) or remote-in-Canada roles, posted within 14 days.
+  **Zero qualifying jobs is an acceptable result — never lower the bar to fill the quota.**
 
 ## Step 0 — Load context
 Read these files from the repo:
@@ -71,18 +74,22 @@ error, immediately fall back to Web Search and do not retry the auth.
 - **Roles:** Process Engineer, Chemical Engineer, and closely related
   (process/manufacturing/sustainability/quality engineering). Include
   junior / new-grad / EIT level — Jarrett is a final-year dual-degree student.
-- **Location:** Greater Toronto Area & **Durham Region** (Ajax, Pickering, Whitby,
-  Oshawa, Toronto, Scarborough, Markham) for onsite/hybrid, **AND** fully **remote
-  roles open to candidates in Canada**.
+- **Location (HARD GATE — reject if it fails):** the job must be **in Canada** —
+  the Greater Toronto Area / **Durham Region** (Ajax, Pickering, Whitby, Oshawa,
+  Toronto, Scarborough, Markham) or elsewhere in **Ontario** for onsite/hybrid,
+  **OR** explicitly **remote and open to candidates in Canada**. **Reject anything
+  outside Canada** (USA, Europe, etc.) and any remote role not open to Canada — no
+  exceptions. Scope every search query to Canada/Ontario (include "Ontario" or
+  "Canada" and prefer Canadian job boards). A non-Canadian location alone is an
+  automatic discard.
 - Skip senior/lead/manager-only roles and anything requiring a P.Eng. with years
   of experience he doesn’t have.
-- **Freshness (hard rule):** only keep postings with a **posted date within the
-  last 14 days**. Skip anything older, anything marked expired / closed / filled,
-  and anything whose apply link or company website is dead or unreachable. If a
-  posting has no determinable date, keep it only if you can confirm it’s still
-  live (a working apply URL on the source board). When the connector supports it,
-  sort/filter by most-recent and request only recent results — do not surface
-  months-old listings.
+- **Freshness (HARD GATE — reject if it fails):** keep a posting **only if you can
+  confirm it was posted within the last 14 days**. If you **cannot determine** the
+  posted date, **reject it** — do not keep undated postings. Reject anything older
+  than 14 days and anything marked expired / closed / filled or with a dead apply
+  link. Add recency terms to queries, prefer most-recent results, and never
+  surface month-old listings.
 
 Web Search snippets and aggregator listing pages do NOT contain a usable job
 description. For each promising hit, **use Web Fetch on the actual posting URL to
@@ -94,8 +101,15 @@ employer/career-page or Indeed posting URLs over redirect/aggregator search page
 If the job connectors are already authenticated, you may use their detail calls
 instead — but never to authenticate or re-authenticate them.
 
-Collect up to ~10 candidates, each with: company, job title, location, job URL,
-posted date (if shown), and the full job-description text.
+Collect up to ~10 candidates, each with: company, job title, **location**,
+**posted date**, job URL, and the full job-description text.
+
+**Before keeping any candidate, check BOTH hard gates explicitly** — write down its
+location and posted date. If it fails either (not in Canada, or not confirmed within
+14 days), **discard it; do not draft or log it.** Finding **zero qualifying jobs is
+a correct, acceptable outcome** — if nothing passes both gates, report "0 new jobs
+today" and stop. **Never relax the location or freshness rules to fill the 3-job
+quota; a bad match is worse than no match.**
 
 ## Step 2 — De-duplicate (compute job_id, check Notion)
 For each candidate, compute a stable **job_id** exactly as `job_scout/ingest_jobs.ts` does:
