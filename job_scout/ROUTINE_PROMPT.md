@@ -4,18 +4,19 @@ Paste the block between the `=== PROMPT START/END ===` markers into your
 scheduled routine (the one connected to this GitHub repo). It's written for a
 Claude Code agent that runs once per day against this repository.
 
-**Connectors the scheduled agent needs** (add under the routine's **Connectors**
-tab — a scheduled routine has no mid-run approval prompts, so anything not added
-up front is blocked):
-- **Indeed** and/or **ZipRecruiter** (required for sourcing) — these return real
-  postings *with full job descriptions*. Plain Web Search only returns aggregator
-  listing pages without usable descriptions, which the routine must skip.
-- **Web Search** (helper) — for discovery / filling gaps only.
-- **Google Drive/Docs** (optional) — if available, also saves the docs as Google
-  Docs and links them; otherwise the resume + cover letter live in the Notion page body.
+**Tools / connectors:**
+- **Web Search + Web Fetch** (required, built-in) — Web Search discovers postings;
+  **Web Fetch retrieves each posting's full job-description text**. Both run through
+  Anthropic, so they work regardless of the sandbox network allowlist.
+- **Indeed / ZipRecruiter connectors** (optional) — use them for sourcing if they're
+  available in your environment; if not, Web Search + Web Fetch covers it.
+- **Google Drive/Docs** (optional) — for linked Google Docs; otherwise the resume +
+  cover letter live in the Notion page body.
 
-**Notion is reached via the Notion API + a token, NOT the connector** — this is
-deterministic and avoids the connector approval gate.
+**Notion is reached via the Notion REST API + a token (not the connector).** This
+**requires `api.notion.com` in the environment's allowed domains** — the `curl`
+calls are direct outbound requests and are blocked (HTTP 403 "host not in
+allowlist") without it. See One-time setup step 4.
 
 **One-time setup (Notion API token):**
 1. Create a Notion **internal integration** at https://www.notion.so/my-integrations
@@ -59,9 +60,11 @@ Read these files from the repo:
 - `job_scout/prompts/tailor_resume.md` — how to tailor the resume.
 - `job_scout/prompts/write_cover_letter.md` — how to write the cover letter.
 
-## Step 1 — Find candidate jobs (job-board connectors first)
-Use the **Indeed** and/or **ZipRecruiter** connectors to search for **newly
-posted** roles matching these criteria (recency is a hard rule — see below):
+## Step 1 — Find candidate jobs (Web Search + Web Fetch)
+Use **Web Search** to discover **newly posted** roles matching these criteria
+(recency is a hard rule — see below). If the **Indeed/ZipRecruiter connectors**
+are available in your environment, prefer them; otherwise Web Search is the
+discovery path.
 - **Roles:** Process Engineer, Chemical Engineer, and closely related
   (process/manufacturing/sustainability/quality engineering). Include
   junior / new-grad / EIT level — Jarrett is a final-year dual-degree student.
@@ -78,12 +81,14 @@ posted** roles matching these criteria (recency is a hard rule — see below):
   sort/filter by most-recent and request only recent results — do not surface
   months-old listings.
 
-For each promising hit, **fetch the full job details** from the connector (e.g.
-Indeed `get_job_details`) so you have the complete job-description text — you need
-it for tailoring and dedup. **Skip any posting whose full description you cannot
-retrieve** (never fabricate one). Use Web Search only as a backup to discover
-postings the connectors miss; if a Web Search hit is just an aggregator listing
-page with no real description, skip it.
+Web Search snippets and aggregator listing pages do NOT contain a usable job
+description. For each promising hit, **use Web Fetch on the actual posting URL to
+retrieve the full job-description text** (requirements, responsibilities, company,
+location, posted date) — Web Fetch runs through Anthropic, so it works even though
+the sandbox blocks direct outbound hosts. **Skip any posting whose full
+description you cannot fetch** (never fabricate one). Prefer direct
+employer/career-page or Indeed posting URLs over redirect/aggregator search pages.
+If the job connectors are available, you may use their detail calls instead.
 
 Collect up to ~10 candidates, each with: company, job title, location, job URL,
 posted date (if shown), and the full job-description text.
