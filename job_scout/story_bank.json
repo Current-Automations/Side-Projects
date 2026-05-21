@@ -1,0 +1,34 @@
+{
+  "stories": [
+    {
+      "id": "automation-proficy-vba",
+      "title": "Automated reporting at a paper mill",
+      "body": "As a Process Engineer Intern at Rayonier Advanced Materials, I automated Proficy data visualization using VBA-enhanced specification sheets and designed an Excel-based chemical inventory system. Together these cut manual reporting effort, improved tracking accuracy, and reduced material waste on the manufacturing lines.",
+      "tags": ["automation", "vba", "excel", "data", "process-optimization", "process-engineering", "reporting"]
+    },
+    {
+      "id": "resource-conservation-dashboards",
+      "title": "Cut utility consumption with data dashboards",
+      "body": "At PepsiCo (Frito-Lay), I built dashboards and tracking tools to monitor daily utility consumption — water, energy, nitrogen, and gas — and surface inefficiencies. I delivered weekly and monthly reports to corporate leadership that directly informed the facility's sustainability planning and resource-conservation upgrades.",
+      "tags": ["data", "dashboards", "sustainability", "reporting", "resource-conservation", "process-optimization"]
+    },
+    {
+      "id": "packaging-team-leadership",
+      "title": "Led a 20+ person packaging team",
+      "body": "As a Packaging Department Supervisor at PepsiCo, I managed a team of 20+ operators while hitting productivity and safety targets. By introducing optimized labor and scheduling practices and coordinating across maintenance and logistics, I improved shift efficiency and reduced costs.",
+      "tags": ["leadership", "operations", "communication", "process-optimization", "collaboration"]
+    },
+    {
+      "id": "ml-svm-classifier",
+      "title": "Shipped a real-time ML classifier",
+      "body": "For a computer-technologies project, I developed and deployed a real-time support vector machine classifier that distinguishes live basketball games from commercials using video frame analysis with an on-screen overlay. I validated it with cross-validation and standard classification metrics on real-world footage.",
+      "tags": ["python", "machine-learning", "computer-vision", "ai", "data"]
+    },
+    {
+      "id": "field-coordination",
+      "title": "Coordinated a multi-trade construction site",
+      "body": "As a Field Coordinator at EllisDon, I coordinated concrete pours and multi-trade scheduling across multiple floors and towers, and streamlined project reporting with advanced Excel/VBA. I worked with project teams to spot workflow bottlenecks and resequence trades to keep the build on schedule.",
+      "tags": ["project-management", "coordination", "leadership", "excel", "vba", "process-optimization"]
+    }
+  ]
+}

@@ -1,0 +1,225 @@
+{
+  "name": "Jarrett Goodwin",
+  "headline": "Chemical Engineering & Computer Technologies (Dual Degree) — Process Optimization, Data & Automation",
+  "contact": {
+    "email": "Jarrett.Goodwin@hotmail.com",
+    "phone": "416-509-7474",
+    "location": "Ajax, ON",
+    "links": []
+  },
+  "summary": "Final-year University of Ottawa student completing a dual degree in Chemical Engineering and Computer Technologies, with an international exchange semester at Florida International University. Proven results in resource conservation, packaging operations, and process optimization, backed by strong data analysis and software skills (Python, Java, Excel/VBA, machine learning). Bilingual in English and French, quick to learn, and focused on safety, performance, and continuous improvement.",
+
+  "skills": [
+    {
+      "category": "Programming & Data",
+      "skills": ["Python", "Java", "VBA", "Machine Learning", "Automation", "Control Systems"]
+    },
+    {
+      "category": "Tools & Platforms",
+      "skills": ["Microsoft Excel (VBA)", "Proficy", "Word", "PowerPoint", "Data analysis platforms"]
+    },
+    {
+      "category": "Engineering",
+      "skills": ["Process Optimization", "Resource Conservation", "Process Control", "Risk Assessment", "Technical Documentation"]
+    },
+    {
+      "category": "Professional",
+      "skills": ["Leadership", "Project Management", "Communication", "Collaboration", "Time Management", "Bilingual (English/French)"]
+    }
+  ],
+
+  "experience": [
+    {
+      "company": "EllisDon",
+      "title": "PDP III Tower B Field Coordinator",
+      "location": "Ottawa, ON",
+      "start": "Sept 2025",
+      "end": "Dec 2025",
+      "tags": ["project-management", "coordination", "leadership"],
+      "bullets": [
+        {
+          "text": "Streamlined project reporting through detailed man-count, trade sequencing, and task tracking using advanced Excel/VBA techniques.",
+          "tags": ["excel", "vba", "data", "automation", "reporting"]
+        },
+        {
+          "text": "Coordinated daily site operations, including scheduling and supervision of concrete pours and multi-trade construction activities.",
+          "tags": ["coordination", "project-management", "operations"]
+        },
+        {
+          "text": "Managed manpower tracking and resource allocation across multiple floors and towers to ensure on-time task completion.",
+          "tags": ["project-management", "resource-conservation"]
+        },
+        {
+          "text": "Collaborated with project teams to identify workflow bottlenecks and optimize trade sequencing for efficient progression.",
+          "tags": ["process-optimization", "collaboration"]
+        },
+        {
+          "text": "Supported project communications by preparing reports and organizing documentation between field and office teams.",
+          "tags": ["communication", "reporting"]
+        }
+      ]
+    },
+    {
+      "company": "National Capital Commission",
+      "title": "Weekend Bikedays Coordinator",
+      "location": "Ottawa, ON",
+      "start": "May 2024",
+      "end": "Oct 2024",
+      "tags": ["leadership", "communication"],
+      "bullets": [
+        {
+          "text": "Supervised attendants to ensure timely assistance, proactive communication, and positive visitor engagement.",
+          "tags": ["leadership", "communication"]
+        },
+        {
+          "text": "Coordinated with contractors to execute smooth daily parkway openings and closures.",
+          "tags": ["coordination", "operations"]
+        },
+        {
+          "text": "Maintained detailed incident and activity reports to inform operational decisions.",
+          "tags": ["reporting", "data"]
+        },
+        {
+          "text": "Resolved patron concerns on-site, balancing rule enforcement with public relations.",
+          "tags": ["communication"]
+        },
+        {
+          "text": "Operated a company vehicle to patrol active-use parkways, promoting safety, accessibility, and compliance.",
+          "tags": ["operations", "risk-assessment"]
+        }
+      ]
+    },
+    {
+      "company": "Rayonier Advanced Materials",
+      "title": "Process Engineer Intern",
+      "location": "Temiscaming, QC",
+      "start": "Sept 2023",
+      "end": "Jan 2024",
+      "tags": ["process-optimization", "process-engineering", "automation"],
+      "bullets": [
+        {
+          "text": "Automated Proficy data visualization through VBA-enhanced specification sheets, improving reporting speed and accuracy.",
+          "tags": ["automation", "vba", "data", "proficy", "reporting"]
+        },
+        {
+          "text": "Designed an Excel-based chemical inventory system, improving tracking accuracy and reducing waste.",
+          "tags": ["excel", "data", "process-optimization"]
+        },
+        {
+          "text": "Supported successful pilot trials for a high-caliper product grade, contributing to product development.",
+          "tags": ["process-engineering", "process-optimization"]
+        },
+        {
+          "text": "Assisted with equipment troubleshooting and process optimization for paper manufacturing lines.",
+          "tags": ["process-optimization", "manufacturing", "process-engineering"]
+        },
+        {
+          "text": "Collaborated across teams on maintenance scheduling, order fulfillment, customer claims, and cost efficiency.",
+          "tags": ["collaboration", "operations"]
+        }
+      ]
+    },
+    {
+      "company": "PepsiCo Foods — Frito-Lay Division",
+      "title": "Resource Conservation Engineer",
+      "location": "Cambridge, ON",
+      "start": "Jan 2023",
+      "end": "May 2023",
+      "tags": ["sustainability", "data", "process-optimization"],
+      "bullets": [
+        {
+          "text": "Built dashboards and tracking tools to identify inefficiencies and target resource-conservation improvements.",
+          "tags": ["dashboards", "data", "automation", "reporting"]
+        },
+        {
+          "text": "Developed systems to monitor and reduce daily utility consumption (water, energy, nitrogen, gas).",
+          "tags": ["process-optimization", "sustainability", "resource-conservation"]
+        },
+        {
+          "text": "Delivered weekly and monthly data reports to corporate leadership, driving informed sustainability planning.",
+          "tags": ["data", "reporting", "communication"]
+        },
+        {
+          "text": "Spearheaded facility upgrades to modernize infrastructure and enhance resource conservation.",
+          "tags": ["process-optimization", "sustainability"]
+        },
+        {
+          "text": "Supported project teams on green initiatives with measurable environmental and operational impact.",
+          "tags": ["collaboration", "sustainability"]
+        }
+      ]
+    },
+    {
+      "company": "PepsiCo Foods — Frito-Lay Division",
+      "title": "Packaging Department Supervisor",
+      "location": "Cambridge, ON",
+      "start": "May 2022",
+      "end": "Sept 2022",
+      "tags": ["leadership", "operations"],
+      "bullets": [
+        {
+          "text": "Managed a team of 20+ operators, ensuring productivity goals, safety standards, and team morale.",
+          "tags": ["leadership", "operations"]
+        },
+        {
+          "text": "Improved shift efficiency and reduced costs by introducing optimized labor and scheduling practices.",
+          "tags": ["process-optimization", "operations"]
+        },
+        {
+          "text": "Directed daily packaging operations, enforcing SOPs and maintaining output quality.",
+          "tags": ["operations"]
+        },
+        {
+          "text": "Acted as liaison between packaging, maintenance, and logistics teams to reduce bottlenecks.",
+          "tags": ["communication", "collaboration", "process-optimization"]
+        },
+        {
+          "text": "Oversaw system upgrades and line improvements, coordinating cross-functional implementation.",
+          "tags": ["project-management", "collaboration"]
+        }
+      ]
+    }
+  ],
+
+  "projects": [
+    {
+      "name": "Real-Time SVM Sports/Commercial Classifier",
+      "summary": "Developed and deployed a real-time support vector machine classifier that distinguishes basketball games from commercials using video frame analysis with an overlay display.",
+      "tags": ["python", "machine-learning", "computer-vision", "ai"],
+      "bullets": [
+        {
+          "text": "Benchmarked and evaluated the model using cross-validation and standard classification metrics on real-world data.",
+          "tags": ["machine-learning", "data"]
+        }
+      ]
+    },
+    {
+      "name": "AI Search & Reasoning Applications",
+      "summary": "Built AI applications using informed search (A*, minimax), constraint satisfaction, and probabilistic reasoning grounded in logic and knowledge representation.",
+      "tags": ["python", "ai", "algorithms", "machine-learning"]
+    }
+  ],
+
+  "education": [
+    {
+      "school": "University of Ottawa",
+      "credential": "BASc Chemical Engineering & BSc Computer Technology (Double Degree)",
+      "year": "2026 (expected)"
+    },
+    {
+      "school": "Florida International University",
+      "credential": "Academic Exchange Semester"
+    }
+  ],
+
+  "certifications": [
+    {
+      "name": "Standard First Aid & CPR (Level C) + AED Certified",
+      "detail": "Trained to recognize and respond to cardiovascular emergencies and choking for adults, children, and infants; certified to use Automated External Defibrillators."
+    },
+    {
+      "name": "Valid Ontario Class G Driver's License",
+      "detail": "Access to a personal vehicle."
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "_comment": "Drop a file like this into ./inbox to feed a job to the daily routine manually. Filename can be anything ending in .job.json. The routine reads, ingests (dedup), processes, then moves it to inbox/processed/. Copy this to e.g. 'acme-backend.job.json' and edit.",
+
+  "company": "Acme Corp",
+  "job_title": "Automation Engineer",
+  "location": "Remote (Canada)",
+  "source": "manual",
+  "job_url": "https://example.com/jobs/acme-automation-engineer",
+  "posted_date": "2026-05-18",
+  "description": "Acme is hiring an Automation Engineer to design and maintain internal workflow automations. You will build integrations across Google Workspace, Notion, and internal APIs using Make and Node.js/TypeScript. Requirements: 2+ years building automations or integrations, strong TypeScript or Python, experience with REST APIs and webhooks, comfort owning projects end-to-end. Nice to have: Make/Zapier, data pipeline experience, startup background."
+}

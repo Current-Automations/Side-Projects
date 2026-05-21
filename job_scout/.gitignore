@@ -1,0 +1,10 @@
+# Secrets and local state — never commit these.
+.env
+google-service-account.json
+tracker.local.json
+node_modules/
+output/
+inbox/processed/
+inbox/*.json
+inbox/*.md
+!inbox/EXAMPLE.job.json

@@ -1,0 +1,21 @@
+{
+  "name": "job-scout",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Daily routine that finds matching jobs, de-duplicates them, and drafts a tailored resume + cover letter for human review. No auto-apply.",
+  "type": "module",
+  "scripts": {
+    "scout": "tsx run_daily_job_scout.ts",
+    "apply-checklist": "tsx apply_ready_jobs.ts",
+    "ingest": "tsx ingest_jobs.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
+  }
+}
