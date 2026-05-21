@@ -4,10 +4,16 @@ Paste the block between the `=== PROMPT START/END ===` markers into your
 scheduled routine (the one connected to this GitHub repo). It's written for a
 Claude Code agent that runs once per day against this repository.
 
-**Connectors the scheduled agent needs:** Notion (required — it's the tracker)
-and Web Search (required — that's how it finds jobs). Google Drive/Docs is
-optional: if available, the routine also saves the docs as Google Docs and links
-them; otherwise the resume + cover letter live in the Notion page body.
+**Connectors the scheduled agent needs** (add these under the routine's
+**Connectors** section — a scheduled routine has no mid-run approval prompts, so
+anything not added up front is blocked):
+- **Notion** (required) — the tracker.
+- **Indeed** and/or **ZipRecruiter** (required for sourcing) — these return real
+  postings *with full job descriptions*. Plain Web Search only returns aggregator
+  listing pages without usable descriptions, which the routine must skip.
+- **Web Search** (helper) — for discovery / filling gaps only.
+- **Google Drive/Docs** (optional) — if available, also saves the docs as Google
+  Docs and links them; otherwise the resume + cover letter live in the Notion page body.
 
 **One-time setup:** make sure the agent's Notion connector can see your
 **Job Scout** database (share it / pick it). The database is:
@@ -42,8 +48,9 @@ Read these files from the repo:
 - `job_scout/prompts/tailor_resume.md` — how to tailor the resume.
 - `job_scout/prompts/write_cover_letter.md` — how to write the cover letter.
 
-## Step 1 — Find candidate jobs (Web Search)
-Search for **newly posted** roles (prefer the last ~7 days) matching these criteria:
+## Step 1 — Find candidate jobs (job-board connectors first)
+Use the **Indeed** and/or **ZipRecruiter** connectors to search for **newly
+posted** roles (prefer the last ~7 days) matching these criteria:
 - **Roles:** Process Engineer, Chemical Engineer, and closely related
   (process/manufacturing/sustainability/quality engineering). Include
   junior / new-grad / EIT level — Jarrett is a final-year dual-degree student.
@@ -51,10 +58,17 @@ Search for **newly posted** roles (prefer the last ~7 days) matching these crite
   Oshawa, Toronto, Scarborough, Markham) for onsite/hybrid, **AND** fully **remote
   roles open to candidates in Canada**.
 - Skip senior/lead/manager-only roles and anything requiring a P.Eng. with years
-  of experience he doesn’t have. Skip postings with no usable description.
+  of experience he doesn’t have.
 
-Collect up to ~10 candidates with: company, job title, location, job URL, posted
-date (if shown), and the full job description text.
+For each promising hit, **fetch the full job details** from the connector (e.g.
+Indeed `get_job_details`) so you have the complete job-description text — you need
+it for tailoring and dedup. **Skip any posting whose full description you cannot
+retrieve** (never fabricate one). Use Web Search only as a backup to discover
+postings the connectors miss; if a Web Search hit is just an aggregator listing
+page with no real description, skip it.
+
+Collect up to ~10 candidates, each with: company, job title, location, job URL,
+posted date (if shown), and the full job-description text.
 
 ## Step 2 — De-duplicate (compute job_id, check Notion)
 For each candidate, compute a stable **job_id** exactly as `job_scout/ingest_jobs.ts` does:

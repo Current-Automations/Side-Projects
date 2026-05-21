@@ -145,9 +145,10 @@ the single remaining step is wiring the Anthropic SDK call (one `messages.create
 
 ### Source patterns
 
-1. **Web search (`board`)** — what the scheduled routine uses (see
-   [`ROUTINE_PROMPT.md`](./ROUTINE_PROMPT.md)): the agent searches each day for
-   new postings matching your criteria.
+1. **Job-board connectors (`board`)** — what the scheduled routine uses (see
+   [`ROUTINE_PROMPT.md`](./ROUTINE_PROMPT.md)): the agent searches Indeed /
+   ZipRecruiter each day and fetches full job descriptions. Plain Web Search is
+   only a backup, since it returns aggregator listing pages without usable JD text.
 2. **Manual drop (`manual`)** — for the standalone scripts / local testing. Drop
    a `*.job.json` file (see `inbox/EXAMPLE.job.json`) into `./inbox`; the script
    ingests it and moves it to `inbox/processed/`.
