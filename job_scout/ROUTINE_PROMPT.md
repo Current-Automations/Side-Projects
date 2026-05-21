@@ -50,7 +50,7 @@ Read these files from the repo:
 
 ## Step 1 — Find candidate jobs (job-board connectors first)
 Use the **Indeed** and/or **ZipRecruiter** connectors to search for **newly
-posted** roles (prefer the last ~7 days) matching these criteria:
+posted** roles matching these criteria (recency is a hard rule — see below):
 - **Roles:** Process Engineer, Chemical Engineer, and closely related
   (process/manufacturing/sustainability/quality engineering). Include
   junior / new-grad / EIT level — Jarrett is a final-year dual-degree student.
@@ -59,6 +59,13 @@ posted** roles (prefer the last ~7 days) matching these criteria:
   roles open to candidates in Canada**.
 - Skip senior/lead/manager-only roles and anything requiring a P.Eng. with years
   of experience he doesn’t have.
+- **Freshness (hard rule):** only keep postings with a **posted date within the
+  last 14 days**. Skip anything older, anything marked expired / closed / filled,
+  and anything whose apply link or company website is dead or unreachable. If a
+  posting has no determinable date, keep it only if you can confirm it’s still
+  live (a working apply URL on the source board). When the connector supports it,
+  sort/filter by most-recent and request only recent results — do not surface
+  months-old listings.
 
 For each promising hit, **fetch the full job details** from the connector (e.g.
 Indeed `get_job_details`) so you have the complete job-description text — you need
