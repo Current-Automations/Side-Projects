@@ -28,8 +28,8 @@ deterministic and avoids the connector approval gate.
 4. **Edit routine → Environment → Network access → Custom** → add
    `api.notion.com` to **Allowed domains** (keep the default list checked).
 
-The database is `https://www.notion.so/12f8659e3a914ff88adf2b6d4020e8a0`
-(id `12f8659e3a914ff88adf2b6d4020e8a0`). The routine reads `NOTION_TOKEN` from the
+The database is `https://www.notion.so/c067058da6d28268bc158158472dc576`
+(id `c067058da6d28268bc158158472dc576`). The routine reads `NOTION_TOKEN` from the
 environment and calls the Notion API directly with `curl`.
 
 ---
@@ -100,7 +100,7 @@ Query the **Job Scout** database via the **Notion API** (token in `$NOTION_TOKEN
 for a page whose **Job ID** equals this value:
 
 ```bash
-curl -s https://api.notion.com/v1/databases/12f8659e3a914ff88adf2b6d4020e8a0/query \
+curl -s https://api.notion.com/v1/databases/c067058da6d28268bc158158472dc576/query \
   -H "Authorization: Bearer $NOTION_TOKEN" \
   -H "Notion-Version: 2022-06-28" \
   -H "Content-Type: application/json" \
@@ -139,7 +139,7 @@ and put their share URLs in the Resume Doc / Cover Letter Doc properties.
 ## Step 5 — Log to the Notion tracker (Notion API)
 Create one page per processed job via `POST https://api.notion.com/v1/pages`
 (same auth headers as Step 2). Set `parent` to
-`{"database_id":"12f8659e3a914ff88adf2b6d4020e8a0"}` and these **properties**
+`{"database_id":"c067058da6d28268bc158158472dc576"}` and these **properties**
 (types in parens must match exactly):
 - **Name** (title) = `{Company} — {Job Title}`
 - **Job ID** (rich_text) = the computed job_id
