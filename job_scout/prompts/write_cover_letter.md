@@ -31,7 +31,7 @@ Job description:
 ## STRUCTURE (around 400 words total)
 
 1. **Opening (about 60 to 90 words)**, based on this template with the brackets filled:
-   > I am writing to apply for the [job_title] position at [company_name]. As a recent graduate with a double degree in Chemical Engineering and Computer Technology from the University of Ottawa, with co-op experience across pulp and paper, food manufacturing, and construction, I am drawn to this opportunity because [one specific phrase from the posting]. I bring both hands-on process experience and strong data and systems thinking, and I am looking to grow under experienced engineers on a team that does real operational work.
+   > I am writing to apply for the [job_title] position at [company_name]. As a recent graduate with a double degree in Chemical Engineering and Computing Technology from the University of Ottawa, with co-op experience across pulp and paper, food manufacturing, and construction, I am drawn to this opportunity because [one specific phrase from the posting]. I bring both hands-on process experience and strong data and systems thinking, and I am looking to grow under experienced engineers on a team that does real operational work.
 
 2. **Body (2 to 3 paragraphs).** Select the 1 to 2 most relevant experience blocks from the story bank using the selection logic below, and tell them in real detail (the situation, what he did, the result), tying each to specific requirements or responsibilities named in the posting. Add the Current Automations or communication block only if the posting calls for it. Do not cram in unrelated blocks.
 

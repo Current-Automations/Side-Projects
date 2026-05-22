@@ -1,13 +1,13 @@
 {
   "name": "Jarrett Goodwin",
-  "headline": "Chemical Engineering & Computer Technologies (Dual Degree) Graduate: Process Optimization, Data & Automation",
+  "headline": "Chemical Engineering & Computing Technology (Dual Degree) Graduate: Process Optimization, Data & Automation",
   "contact": {
     "email": "Jarrett.Goodwin@hotmail.com",
     "phone": "416-509-7474",
     "location": "Ajax, ON",
     "links": []
   },
-  "summary": "University of Ottawa graduate (April 2026) with a dual degree in Chemical Engineering and Computer Technologies, including an exchange semester at Florida International University, now pursuing P.Eng licensure through PEO. Engineering co-op experience across pulp and paper (RYAM), food manufacturing (Frito-Lay, two terms), and construction (EllisDon), covering process engineering, automation rollouts, resource conservation, and field supervision. Founder of Current Automations, an AI and process-automation company serving trades and service businesses in Ontario. Strong in data analysis and software (Python, Java, Excel/VBA, machine learning) and bilingual in English and French.",
+  "summary": "University of Ottawa graduate (April 2026) with a dual degree in Chemical Engineering and Computing Technology, including an exchange semester at Florida International University, now pursuing P.Eng licensure through PEO. Engineering co-op experience across pulp and paper (RYAM), food manufacturing (Frito-Lay, two terms), and construction (EllisDon), covering process engineering, automation rollouts, resource conservation, and field supervision. Founder of Current Automations, an AI and process-automation company serving trades and service businesses in Ontario. Strong in data analysis and software (Python, Java, Excel/VBA, machine learning) and bilingual in English and French.",
 
   "skills": [
     {
@@ -237,7 +237,7 @@
   "education": [
     {
       "school": "University of Ottawa",
-      "credential": "BASc Chemical Engineering & BSc Computer Technology (Double Degree)",
+      "credential": "BASc Chemical Engineering and BSc Computing Technology",
       "year": "2026"
     },
     {
