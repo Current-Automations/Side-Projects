@@ -32,9 +32,10 @@ Job description:
 
 ## INSTRUCTIONS
 - Keep the candidate's facts truthful. Never invent experience, employers, dates, or metrics.
-- Rewrite the summary (2–3 sentences) so it speaks directly to this role, using the posting's language.
+- Rewrite the summary (2 to 3 sentences) so it speaks directly to this role, using the posting's language.
 - Keep section order as given (it is already prioritized for this job).
 - Within each experience entry, lead each bullet with the result/impact. Mirror keywords from the posting **only where they genuinely apply**.
-- Minimize or omit content unrelated to this role — do not pad.
-- Structure: Name + headline → Summary → Skills → Experience → Projects → Education → Certifications.
+- Minimize or omit content unrelated to this role; do not pad.
+- Structure: Name and headline, then Summary, Skills, Experience, Projects, Education, Certifications.
+- **Do NOT use em dashes or en dashes anywhere.** Use commas, colons, or hyphens instead.
 - Plain Markdown only. No tables. Bullets use `-`.

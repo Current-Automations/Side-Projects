@@ -52,6 +52,9 @@ files to the repo. Work in clear, serial steps. Be concise.
   doing any work on a job.
 - **Never fabricate.** Use only the facts in `job_scout/base_resume.json` and
   `job_scout/story_bank.json`. Do not invent employers, dates, metrics, or skills.
+- **Never use em dashes or en dashes** anywhere in the resume, cover letter, or
+  Notion content. Use commas, colons, periods, or hyphens instead. Jarrett is a
+  graduate, not a student.
 - Process at most **3 new jobs** this run. If you find more, log the rest as
   `new` (no docs) and note they’ll be picked up tomorrow.
 - **Honor the location + freshness gates strictly** (Step 1): only Canadian
@@ -73,7 +76,7 @@ you may use them; if a connector call returns an auth / OAuth / registration
 error, immediately fall back to Web Search and do not retry the auth.
 - **Roles:** Process Engineer, Chemical Engineer, and closely related
   (process/manufacturing/sustainability/quality engineering). Include
-  junior / new-grad / EIT level — Jarrett is a final-year dual-degree student.
+  junior / new-grad / EIT level. Jarrett is a recent dual-degree graduate.
 - **Location (HARD GATE — reject if it fails):** the job must be **in Canada** —
   the Greater Toronto Area / **Durham Region** (Ajax, Pickering, Whitby, Oshawa,
   Toronto, Scarborough, Markham) or elsewhere in **Ontario** for onsite/hybrid,
@@ -138,25 +141,29 @@ curl -s https://api.notion.com/v1/databases/c067058da6d28268bc158158472dc576/que
 ## Step 3 — For up to 3 new jobs, draft tailored documents
 For each new job (newest / best-matched first):
 
-**Resume** — follow `prompts/tailor_resume.md`:
+**Resume** (follow `prompts/tailor_resume.md`):
 - Reorder and emphasize the resume content that matches this posting’s
   requirements/keywords (Jarrett’s tags include: process-optimization,
   process-engineering, automation, vba, excel, data, sustainability, python, etc.).
 - Rewrite the summary to speak to this role. Lead each bullet with impact.
   Minimize unrelated content. Keep every fact truthful. Output clean Markdown.
 
-**Cover letter** — follow `prompts/write_cover_letter.md`:
-- Pick the single most relevant story from `story_bank.json` for this job.
-- 3–5 short paragraphs, ~250 words max: a specific hook for the company/role,
-  one concrete story, a short direct close. Truthful. Plain prose.
+**Cover letter** (follow `prompts/write_cover_letter.md`):
+- Pick the most relevant story from `story_bank.json` for this job.
+- Write a detailed letter: 4 to 5 substantive paragraphs, roughly 350 to 450
+  words. A specific hook for the company/role; the story told with real detail
+  (situation, action, measurable result) tied to 2 or 3 named requirements in the
+  posting; a second relevant achievement from the resume where it helps; a short
+  fit paragraph; a direct close. Truthful, specific, plain prose.
+- **No em dashes or en dashes** anywhere. Use commas, colons, periods, or hyphens.
 
 ## Step 4 — Store the documents
 Write the full tailored **resume** and **cover letter** into the **body of the
 job's Notion page** (created in Step 5), each under a clear heading. This is the
-primary, always-available store — you review them right inside Notion.
+primary, always-available store; you review them right inside Notion.
 **If the Google Drive/Docs connector is available**, also create:
-- `Jarrett Goodwin — {Company} — {Job Title} — Resume`
-- `Jarrett Goodwin — {Company} — {Job Title} — Cover Letter`
+- `Jarrett Goodwin - {Company} - {Job Title} - Resume`
+- `Jarrett Goodwin - {Company} - {Job Title} - Cover Letter`
 and put their share URLs in the Resume Doc / Cover Letter Doc properties.
 
 ## Step 5 — Log to the Notion tracker (Notion API)
@@ -164,7 +171,7 @@ Create one page per processed job via `POST https://api.notion.com/v1/pages`
 (same auth headers as Step 2). Set `parent` to
 `{"database_id":"c067058da6d28268bc158158472dc576"}` and these **properties**
 (types in parens must match exactly):
-- **Name** (title) = `{Company} — {Job Title}`
+- **Name** (title) = `{Company} - {Job Title}` (use a hyphen, not a dash)
 - **Job ID** (rich_text) = the computed job_id
 - **Company**, **Job Title**, **Location** (rich_text)
 - **Source** (select) = `board`

@@ -1,13 +1,13 @@
 {
   "name": "Jarrett Goodwin",
-  "headline": "Chemical Engineering & Computer Technologies (Dual Degree) — Process Optimization, Data & Automation",
+  "headline": "Chemical Engineering & Computer Technologies (Dual Degree) Graduate: Process Optimization, Data & Automation",
   "contact": {
     "email": "Jarrett.Goodwin@hotmail.com",
     "phone": "416-509-7474",
     "location": "Ajax, ON",
     "links": []
   },
-  "summary": "Final-year University of Ottawa student completing a dual degree in Chemical Engineering and Computer Technologies, with an international exchange semester at Florida International University. Proven results in resource conservation, packaging operations, and process optimization, backed by strong data analysis and software skills (Python, Java, Excel/VBA, machine learning). Bilingual in English and French, quick to learn, and focused on safety, performance, and continuous improvement.",
+  "summary": "University of Ottawa graduate with a dual degree in Chemical Engineering and Computer Technologies, including an international exchange semester at Florida International University. Proven results in resource conservation, packaging operations, and process optimization, backed by strong data analysis and software skills (Python, Java, Excel/VBA, machine learning). Bilingual in English and French, quick to learn, and focused on safety, performance, and continuous improvement.",
 
   "skills": [
     {
@@ -120,7 +120,7 @@
       ]
     },
     {
-      "company": "PepsiCo Foods — Frito-Lay Division",
+      "company": "PepsiCo Foods (Frito-Lay Division)",
       "title": "Resource Conservation Engineer",
       "location": "Cambridge, ON",
       "start": "Jan 2023",
@@ -150,7 +150,7 @@
       ]
     },
     {
-      "company": "PepsiCo Foods — Frito-Lay Division",
+      "company": "PepsiCo Foods (Frito-Lay Division)",
       "title": "Packaging Department Supervisor",
       "location": "Cambridge, ON",
       "start": "May 2022",
@@ -204,7 +204,7 @@
     {
       "school": "University of Ottawa",
       "credential": "BASc Chemical Engineering & BSc Computer Technology (Double Degree)",
-      "year": "2026 (expected)"
+      "year": "2026"
     },
     {
       "school": "Florida International University",
