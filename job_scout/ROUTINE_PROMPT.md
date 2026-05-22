@@ -148,14 +148,13 @@ For each new job (newest / best-matched first):
 - Rewrite the summary to speak to this role. Lead each bullet with impact.
   Minimize unrelated content. Keep every fact truthful. Output clean Markdown.
 
-**Cover letter** (follow `prompts/write_cover_letter.md`):
-- Pick the most relevant story from `story_bank.json` for this job.
-- Write a detailed letter: 4 to 5 substantive paragraphs, roughly 350 to 450
-  words. A specific hook for the company/role; the story told with real detail
-  (situation, action, measurable result) tied to 2 or 3 named requirements in the
-  posting; a second relevant achievement from the resume where it helps; a short
-  fit paragraph; a direct close. Truthful, specific, plain prose.
-- **No em dashes or en dashes** anywhere. Use commas, colons, periods, or hyphens.
+**Cover letter** (follow `prompts/write_cover_letter.md` exactly):
+- Use its opening and closing templates, and its block selection logic to choose
+  the 1 to 2 most relevant experience blocks from `story_bank.json` (add the
+  Current Automations or communication block only if the posting calls for it).
+- Around 400 words. Put the exact job title verbatim in the opening, mirror 3 to 5
+  phrases from the posting in the body, and run its post-generation checklist.
+- Truthful and specific. No em dashes or en dashes; use commas, colons, periods, or hyphens.
 
 ## Step 4 — Store the documents
 Write the full tailored **resume** and **cover letter** into the **body of the

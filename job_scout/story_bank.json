@@ -1,34 +1,40 @@
 {
   "stories": [
     {
-      "id": "automation-proficy-vba",
-      "title": "Automated reporting at a paper mill",
-      "body": "As a Process Engineer Intern at Rayonier Advanced Materials, I automated Proficy data visualization using VBA-enhanced specification sheets and designed an Excel-based chemical inventory system. Together these cut manual reporting effort, improved tracking accuracy, and reduced material waste on the manufacturing lines.",
-      "tags": ["automation", "vba", "excel", "data", "process-optimization", "process-engineering", "reporting"]
+      "id": "ryam-pulp-paper",
+      "title": "Rationalized fibre recipes and ran trials at a paper mill (RYAM)",
+      "body": "At RYAM I worked in an integrated paper mill where wood and woodchips entered one end of the plant and a finished three-layer paperboard product came out the other. Each layer of the board had its own recipe of hardwood and softwood fibre, and I worked on rationalizing those recipes to make production more uniform. The existing setup had feeds running various hardwood and softwood blends, for example 80/20 and 60/40, and I tested scenarios where one feed ran all hardwood and the other all softwood, assessing the impacts on pumping power and other operating variables. I also supervised the pilot and production testing of a new optical brightening agent that a supplier proposed as a cheaper alternative to our existing product, coordinating lab and production trials to compare brightness and paper appearance before any change to the standard formulation.",
+      "tags": ["process-engineering", "process", "plant", "quality", "paper", "pulp-and-paper", "manufacturing", "chemistry", "trials", "raw-materials", "continuous-improvement"]
     },
     {
-      "id": "resource-conservation-dashboards",
-      "title": "Cut utility consumption with data dashboards",
-      "body": "At PepsiCo (Frito-Lay), I built dashboards and tracking tools to monitor daily utility consumption — water, energy, nitrogen, and gas — and surface inefficiencies. I delivered weekly and monthly reports to corporate leadership that directly informed the facility's sustainability planning and resource-conservation upgrades.",
-      "tags": ["data", "dashboards", "sustainability", "reporting", "resource-conservation", "process-optimization"]
+      "id": "fritolay-agv-automation",
+      "title": "Supported an AGV automation rollout on the plant floor (Frito-Lay, Term 1)",
+      "body": "During my first co-op at Frito-Lay, the plant was rolling out automated guided vehicles to move pallets and materials throughout the facility. The implementation had significant issues early on and required constant troubleshooting with operators and supervisors to keep production running. By my second term the system was operating far more reliably, and I was part of the team that worked through that transition. That experience gave me practical exposure to how automation actually lands on a plant floor, including the human side of it, and how to support a team through technical change.",
+      "tags": ["automation", "change-management", "implementation", "operations", "troubleshooting", "cross-functional", "continuous-improvement"]
     },
     {
-      "id": "packaging-team-leadership",
-      "title": "Led a 20+ person packaging team",
-      "body": "As a Packaging Department Supervisor at PepsiCo, I managed a team of 20+ operators while hitting productivity and safety targets. By introducing optimized labor and scheduling practices and coordinating across maintenance and logistics, I improved shift efficiency and reduced costs.",
-      "tags": ["leadership", "operations", "communication", "process-optimization", "collaboration"]
+      "id": "fritolay-resource-conservation",
+      "title": "Monitored utilities and drove resource conservation (Frito-Lay, Term 2)",
+      "body": "In my second co-op at Frito-Lay I focused on resource conservation, monitoring water, gas, and electricity consumption across the plant. I tracked where usage was highest, investigated why certain days or certain products consistently used more, and worked with the team to identify whether those trends could be mitigated. A major part of the role was balancing that project work with constant firefighting, because things went wrong regularly and I was needed across the plant. Learning to prioritize and deliver on longer-term work while responding to urgent problems in real time was one of the most practical things I took from that experience.",
+      "tags": ["utilities", "energy", "sustainability", "resource-conservation", "data", "monitoring", "operations", "operational-analysis"]
     },
     {
-      "id": "ml-svm-classifier",
-      "title": "Shipped a real-time ML classifier",
-      "body": "For a computer-technologies project, I developed and deployed a real-time support vector machine classifier that distinguishes live basketball games from commercials using video frame analysis with an on-screen overlay. I validated it with cross-validation and standard classification metrics on real-world footage.",
-      "tags": ["python", "machine-learning", "computer-vision", "ai", "data"]
+      "id": "ellisdon-construction",
+      "title": "Supervised concrete pours from blueprints to verified work (EllisDon)",
+      "body": "At EllisDon I worked as a construction supervisor responsible for most of what went into concrete pours from start to finish. I received initial blueprints and translated them into clear requirements for subtrades, supervised their work on site to ensure formwork and rebar matched the drawings, coordinated with engineers to get approval of forms and reinforcement before any pour, and made sure concrete testing was completed and the results met specification afterward. Owning a scope from blueprints through to verified, built work, while keeping subtrades and engineers aligned under schedule pressure, was a strong foundation for understanding how engineering decisions play out in the field.",
+      "tags": ["project-management", "construction", "field", "coordination", "drawings", "quality", "engineering-interface"]
     },
     {
-      "id": "field-coordination",
-      "title": "Coordinated a multi-trade construction site",
-      "body": "As a Field Coordinator at EllisDon, I coordinated concrete pours and multi-trade scheduling across multiple floors and towers, and streamlined project reporting with advanced Excel/VBA. I worked with project teams to spot workflow bottlenecks and resequence trades to keep the build on schedule.",
-      "tags": ["project-management", "coordination", "leadership", "excel", "vba", "process-optimization"]
+      "id": "current-automations",
+      "title": "Builds AI and automation systems for Ontario businesses (Current Automations)",
+      "body": "Outside of school and co-ops I run Current Automations, where I build AI and automation systems for trades and service businesses in Ontario. In practice this means working directly with business owners to understand their current processes, mapping out where work falls through the cracks, and then designing and implementing reliable systems that integrate tools like CRMs, phone systems, and AI assistants. I test and monitor these systems, iterate based on real-world feedback, and document everything so non-technical staff can operate them. Running a business solo has also required disciplined outreach, cold calling, and the ability to earn trust quickly with busy people who are skeptical of technology, which has made me comfortable simplifying complex ideas and communicating clearly under pressure.",
+      "tags": ["automation", "data", "systems", "digital", "scripting", "software", "continuous-improvement", "efficiency"]
+    },
+    {
+      "id": "communication-ownership",
+      "title": "Owns client relationships end to end (Current Automations)",
+      "body": "Running Current Automations has required me to manage every part of a client relationship independently, from initial cold outreach through discovery, scoping, implementation, and ongoing support. I am comfortable talking to experienced operators and business owners, simplifying technical ideas for non-technical audiences, and asking the right questions to understand a problem before proposing a solution.",
+      "tags": ["communication", "stakeholder", "client", "cross-functional", "leadership", "ownership"]
     }
   ]
 }
