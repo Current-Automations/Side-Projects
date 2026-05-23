@@ -52,7 +52,19 @@ we return eBay sold price + last 10 sales in under 3 seconds.
 /extension/popup            Extension popup UI
 
 ## Current phase
-Session 1 — Schema + typed DB client (in progress)
+Session 2 — GPT-4o identification endpoint
 
 ## Last session summary
-[PASTE HANDOFF DOC HERE AT THE START OF EVERY SESSION]
+Session 1 complete (commit `255c814`). Shipped: `supabase/migrations/001_initial_schema.sql`
+(7 tables — cards, price_cache, users, scan_logs, corrections, training_examples, training_runs —
+with indexes, RLS, the `handle_new_user` trigger, and the atomic `increment_scan_count` RPC), the
+typed DB layer under `/lib/db` (import from `@/lib/db`), Zod-backed types under `/lib/types`, plus
+`PRD.md` and `ISSUES.md`. Full detail in `HANDOFF.md`.
+
+Open items before/within Session 2: no test runner or `test` script yet (TDD needs one); no `openai`
+dep installed; migration not yet applied to a live Supabase project; wire `getActiveTrainingRun()`
+into inference for fine-tuned-model switching with base GPT-4o fallback.
+
+NOTE: Next.js is actually v16.2.6 (the "Next.js 14" in Stack above is stale). See `AGENTS.md` — this
+version has breaking changes vs. training data; read `node_modules/next/dist/docs/` before writing
+route handlers. Lint is `eslint`, not `next lint`.
