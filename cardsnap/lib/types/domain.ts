@@ -28,32 +28,36 @@ export const GradeCompanySchema = z.enum(['PSA', 'BGS', 'SGC', 'CGC']);
 // Card identification — the primary AI output shape
 // ---------------------------------------------------------------------------
 
-export const CardIdentificationSchema = z
-  .object({
-    sport: SportSchema,
-    player_name: z.string().min(1),
-    year: z.number().int().min(1980).max(2030),
-    manufacturer: ManufacturerSchema,
-    product_line: z.string().min(1),
-    set_variant: z.string().optional(),
-    card_number: z.string().optional(),
-    parallel_name: z.string().default('Base'),
-    serial_number: z
-      .string()
-      .regex(/^(\d+\/\d+|\/\d+)$/)
-      .optional(),
-    is_graded: z.boolean(),
-    grade_company: GradeCompanySchema.optional(),
-    grade_value: z
-      .string()
-      .regex(/^\d+(\.\d)?$/)
-      .optional(),
-    bgs_black_label: z.boolean().optional(),
-    confidence: z.number().min(0).max(1),
-    parallel_confidence: z.number().min(0).max(1),
-    needs_confirmation: z.boolean().default(false),
-    error: z.string().optional(),
-  })
+// Base object (no refinements) — `.partial()`/`.required()` can only operate on
+// a plain object schema, so CorrectionSchema below derives from this, while the
+// refined CardIdentificationSchema is the one used to validate full AI output.
+export const CardIdentificationObject = z.object({
+  sport: SportSchema,
+  player_name: z.string().min(1),
+  year: z.number().int().min(1980).max(2030),
+  manufacturer: ManufacturerSchema,
+  product_line: z.string().min(1),
+  set_variant: z.string().optional(),
+  card_number: z.string().optional(),
+  parallel_name: z.string().default('Base'),
+  serial_number: z
+    .string()
+    .regex(/^(\d+\/\d+|\/\d+)$/)
+    .optional(),
+  is_graded: z.boolean(),
+  grade_company: GradeCompanySchema.optional(),
+  grade_value: z
+    .string()
+    .regex(/^\d+(\.\d)?$/)
+    .optional(),
+  bgs_black_label: z.boolean().optional(),
+  confidence: z.number().min(0).max(1),
+  parallel_confidence: z.number().min(0).max(1),
+  needs_confirmation: z.boolean().default(false),
+  error: z.string().optional(),
+});
+
+export const CardIdentificationSchema = CardIdentificationObject
   .refine(
     (data) => !data.is_graded || data.grade_company !== undefined,
     { message: 'grade_company required when is_graded is true' }
@@ -115,7 +119,7 @@ export type ScanResult = z.infer<typeof ScanResultSchema>;
 
 export const CorrectionSchema = z.object({
   scan_id: z.string().uuid(),
-  corrected_card: CardIdentificationSchema.partial().required({
+  corrected_card: CardIdentificationObject.partial().required({
     player_name: true,
     year: true,
     manufacturer: true,

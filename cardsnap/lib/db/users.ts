@@ -49,9 +49,10 @@ export async function checkScanAllowed(userId: string): Promise<
       .from('users')
       .select('plan_tier, scans_used_today, scans_reset_at')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
 
     if (error) return { success: false, error: error.message }
+    if (!data) return { success: false, error: 'User not found' }
 
     const { plan_tier, scans_used_today, scans_reset_at } = data as Pick<
       User,

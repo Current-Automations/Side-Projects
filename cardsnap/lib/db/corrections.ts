@@ -8,7 +8,6 @@
  * available, this module falls back to sequential inserts with manual rollback.
  */
 
-// @ts-expect-error — CardIdentification will be available once lib/types/domain.ts is imported transitively
 import type { CardIdentification } from '@/lib/types';
 import { createServerClient } from './client';
 
