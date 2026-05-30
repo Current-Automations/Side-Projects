@@ -1,0 +1,69 @@
+:root {
+  --bg: #0c0c0e;
+  --gold: #f3c63d;
+  --cell: #16306b;
+  --cell-used: #2a2a2e;
+  --text: #f5f5f5;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+.hidden { display: none !important; }
+h1 { color: var(--gold); }
+
+/* Setup */
+.setup { max-width: 640px; margin: 40px auto; padding: 0 20px; }
+.setup label { display: block; margin: 14px 0 4px; font-weight: 700; }
+.setup input[type="text"] { width: 100%; padding: 8px; font-size: 16px; }
+.player-row { display: flex; gap: 8px; margin-bottom: 6px; }
+.cat-list label { font-weight: 400; display: flex; gap: 8px; align-items: center; }
+button {
+  background: var(--gold); color: #000; border: 0; border-radius: 6px;
+  padding: 10px 16px; font-weight: 700; font-size: 15px; cursor: pointer;
+}
+button.secondary { background: #2a2a2e; color: var(--text); }
+
+/* Board */
+.topbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; }
+.topbar a { color: var(--gold); }
+.board { display: grid; gap: 8px; padding: 0 16px; }
+.cat-head {
+  background: #000; color: var(--gold); text-align: center; padding: 14px 6px;
+  font-weight: 800; text-transform: uppercase; border-radius: 6px;
+}
+.cell {
+  background: var(--cell); color: var(--gold); font-size: 28px; font-weight: 800;
+  text-align: center; padding: 22px 6px; border-radius: 6px; cursor: pointer;
+  transition: opacity 0.25s ease;
+}
+.cell.used { background: var(--cell-used); color: var(--cell-used); cursor: default; }
+
+/* Scores */
+.scores { display: flex; gap: 10px; padding: 16px; flex-wrap: wrap; }
+.score-card {
+  border: 2px solid transparent; border-radius: 8px; padding: 10px 16px;
+  background: #18181c; min-width: 120px; text-align: center;
+}
+.score-card.active { border-color: var(--gold); }
+.score-card .name { font-weight: 700; }
+.score-card .pts { font-size: 24px; color: var(--gold); }
+
+/* Overlay */
+.overlay {
+  position: fixed; inset: 0; background: rgba(8,8,10,0.97);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px; text-align: center; animation: fade 0.25s ease;
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.overlay .q { font-size: 38px; font-weight: 800; max-width: 1000px; }
+.overlay .a {
+  font-size: 30px; color: var(--gold); margin-top: 24px; filter: blur(10px);
+  cursor: pointer; transition: filter 0.25s ease;
+}
+.overlay .a.revealed { filter: none; }
+.overlay .controls { margin-top: 36px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.timer { font-size: 40px; color: var(--gold); margin-top: 16px; min-height: 48px; }
