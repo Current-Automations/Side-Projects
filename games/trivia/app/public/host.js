@@ -96,8 +96,111 @@ function renderScores() {
   }
 }
 
-// Stubbed — implemented in Task 7 / 8
-function openQuestion(categoryId, questionId) { console.log('open', categoryId, questionId); }
+let timerHandle = null;
+
+function clearTimer() {
+  if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
+}
+
+function closeOverlay() {
+  clearTimer();
+  $('overlay-root').innerHTML = '';
+}
+
+function openQuestion(categoryId, questionId) {
+  Game.selectQuestion(state, categoryId, questionId);
+  renderOverlay();
+}
+
+function renderOverlay() {
+  const cq = state.currentQuestion;
+  if (!cq) { closeOverlay(); return; }
+  const root = $('overlay-root');
+  root.innerHTML = '';
+
+  const answer = el('div', { class: 'a' + (cq.answerRevealed ? ' revealed' : ''), text: cq.answer });
+  answer.addEventListener('click', () => { Game.revealAnswer(state); renderOverlay(); });
+
+  const timerLabel = el('div', { class: 'timer' });
+
+  const controls = el('div', { class: 'controls' });
+  renderAttemptControls(controls);
+
+  const overlay = el('div', { class: 'overlay' }, [
+    el('div', { class: 'q', text: cq.question }),
+    answer,
+    timerLabel,
+    el('div', { class: 'controls' }, [
+      el('button', { class: 'secondary', text: 'Start Timer (30s)', type: 'button',
+        onclick: () => startTimer(timerLabel, 30) })
+    ]),
+    controls
+  ]);
+  root.appendChild(overlay);
+}
+
+function startTimer(label, seconds) {
+  clearTimer();
+  let remaining = seconds;
+  label.textContent = String(remaining);
+  timerHandle = setInterval(() => {
+    remaining--;
+    label.textContent = remaining > 0 ? String(remaining) : "Time's up";
+    if (remaining <= 0) clearTimer();
+  }, 1000);
+}
+
+function renderAttemptControls(controls) {
+  controls.innerHTML = '';
+  for (const p of state.players) {
+    controls.appendChild(el('button', {
+      class: 'secondary', text: p.name, type: 'button',
+      onclick: () => pickAnswerer(p.id, controls)
+    }));
+  }
+}
+
+function pickAnswerer(playerId, controls) {
+  const player = state.players.find(p => p.id === playerId);
+  controls.innerHTML = '';
+  controls.appendChild(el('div', { text: `${player.name}: ` }));
+  controls.appendChild(el('button', {
+    text: 'Correct', type: 'button',
+    onclick: () => resolveAttempt(playerId, true)
+  }));
+  controls.appendChild(el('button', {
+    class: 'secondary', text: 'Incorrect', type: 'button',
+    onclick: () => resolveAttempt(playerId, false)
+  }));
+}
+
+function resolveAttempt(playerId, correct) {
+  const status = Game.recordAttempt(state, playerId, correct);
+  clearTimer();
+  renderScores();
+  renderBoard();
+  if (status === 'correct') {
+    closeOverlay();
+  } else if (status === 'incorrect-continue') {
+    renderOverlay();
+  } else if (status === 'incorrect-final') {
+    renderFinalOverlay();
+  }
+}
+
+function renderFinalOverlay() {
+  const cq = state.currentQuestion;
+  const root = $('overlay-root');
+  root.innerHTML = '';
+  const overlay = el('div', { class: 'overlay' }, [
+    el('div', { class: 'q', text: cq.question }),
+    el('div', { class: 'a revealed', text: cq.answer }),
+    el('div', { class: 'controls' }, [
+      el('button', { text: 'Close', type: 'button', onclick: () => { Game.closeQuestion(state); closeOverlay(); } })
+    ])
+  ]);
+  root.appendChild(overlay);
+}
 
 $('add-player').addEventListener('click', () => addPlayerRow());
 $('start').addEventListener('click', startGame);
