@@ -212,3 +212,37 @@ document.addEventListener('input', e => { if (e.target.classList.contains('pname
   addPlayerRow();
   renderCatList();
 })();
+
+$('end-game').addEventListener('click', () => {
+  if (!confirm('End the game and show final scores?')) return;
+  showEndScreen();
+});
+
+function showEndScreen() {
+  closeOverlay();
+  const ranked = [...state.players].sort((a, b) => b.score - a.score);
+  const root = $('endscreen');
+  root.className = 'endscreen';
+  root.innerHTML = '';
+  root.appendChild(el('h1', { text: 'Final Scores' }));
+  ranked.forEach((p, i) => {
+    root.appendChild(el('div', { class: 'rank' + (i === 0 ? ' first' : ''), text: `${i + 1}. ${p.name} — ${p.score}` }));
+  });
+  root.appendChild(el('div', { class: 'controls' }, [
+    el('button', { text: 'Restart (same players)', type: 'button', onclick: restartSamePlayers }),
+    el('button', { class: 'secondary', text: 'Back to Setup', type: 'button', onclick: () => location.reload() })
+  ]));
+}
+
+function restartSamePlayers() {
+  state = Game.createGame({
+    mode: state.mode,
+    players: state.players.map(p => ({ id: p.id, name: p.name })),
+    firstPlayerId: state.players[0].id,
+    categories: state.categories
+  });
+  $('endscreen').className = 'hidden';
+  $('endscreen').innerHTML = '';
+  renderBoard();
+  renderScores();
+}

@@ -67,3 +67,12 @@ button.secondary { background: #2a2a2e; color: var(--text); }
 .overlay .a.revealed { filter: none; }
 .overlay .controls { margin-top: 36px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .timer { font-size: 40px; color: var(--gold); margin-top: 16px; min-height: 48px; }
+
+.endscreen {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+}
+.endscreen h1 { font-size: 44px; }
+.rank { font-size: 26px; }
+.rank.first { color: var(--gold); font-weight: 800; }
+.endscreen .controls { display: flex; gap: 10px; margin-top: 20px; }
