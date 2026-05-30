@@ -10,5 +10,5 @@ test('server serves host.html at root', async () => {
   const body = await res.text();
   server.close();
   assert.strictEqual(res.status, 200);
-  assert.match(body, /Drinking & Thinking Trivia/);
+  assert.match(body, /Drinking[\s\S]*?Thinking Trivia/);
 });

@@ -115,9 +115,11 @@ test('server serves host.html at root', async () => {
   const body = await res.text();
   server.close();
   assert.strictEqual(res.status, 200);
-  assert.match(body, /Drinking & Thinking Trivia/);
+  assert.match(body, /Drinking[\s\S]*?Thinking Trivia/);
 });
 ```
+
+(Note: the regex is encoding-robust — `host.html` uses the proper `&amp;` entity, and `[\s\S]*?` spans it. This also keeps the test green when Task 6 replaces `host.html`.)
 
 - [ ] **Step 6: Run test to verify it passes**
 
