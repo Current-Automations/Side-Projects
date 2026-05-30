@@ -1,0 +1,28 @@
+{
+  "input_dir": "C:/path/to/input",
+  "output_dir": "C:/path/to/output",
+  "temp_dir": "C:/path/to/temp",
+  "jobs_root": "jobs",
+  "clip_settings": {
+    "clip_length_seconds": 60,
+    "overlap_seconds": 5,
+    "max_clips_per_video": 2
+  },
+  "tiktok": {
+    "enabled": true,
+    "width": 1080,
+    "height": 1920,
+    "mode": "smart",
+    "smart_detect_every_n_frames": 5,
+    "smart_smoothing_alpha": 0.25
+  },
+  "logging": {
+    "level": "INFO"
+  },
+  "watcher": {
+    "poll_interval_seconds": 5
+  },
+  "retries": {
+    "max_retries": 3
+  }
+}

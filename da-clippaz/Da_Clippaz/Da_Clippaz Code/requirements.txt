@@ -1,0 +1,9 @@
+# Test dependencies
+pytest>=7.0
+
+# Core pipeline dependencies
+yt-dlp>=2023.0.0
+
+# Smart View face-tracking dependencies
+mediapipe>=0.10.0
+opencv-python>=4.8.0

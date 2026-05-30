@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+:root {
+  --gold: #C9A84C;
+  --gold-dim: rgba(201, 168, 76, 0.1);
+  --gold-border: rgba(201, 168, 76, 0.28);
+  --bg: #0a0a0a;
+  --surface: rgba(255, 255, 255, 0.04);
+  --line: rgba(255, 255, 255, 0.08);
+  --muted: rgba(255, 255, 255, 0.5);
+}
+
+@theme inline {
+  --color-background: #0a0a0a;
+  --color-foreground: #ffffff;
+  --font-sans: var(--font-oswald);
+  --font-display: var(--font-oswald);
+}
+
+@layer base {
+  * {
+    border-color: var(--line);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: #fff;
+    font-family: var(--font-oswald), sans-serif;
+    letter-spacing: 0.02em;
+  }
+
+  ::selection {
+    background: rgba(201, 168, 76, 0.3);
+    color: #0a0a0a;
+  }
+
+  a,
+  button {
+    transition: color 180ms ease, background-color 180ms ease,
+      border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease,
+      opacity 180ms ease;
+  }
+
+  a:focus-visible,
+  button:focus-visible {
+    outline: 2px solid rgba(201, 168, 76, 0.7);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .site-shell {
+    @apply relative flex min-h-screen flex-col overflow-x-clip;
+  }
+
+  .container-shell {
+    @apply mx-auto w-full max-w-7xl px-6 sm:px-8 lg:px-10;
+  }
+
+  .section-spacing {
+    @apply py-20 sm:py-24 lg:py-28;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-7 py-4 text-sm font-bold uppercase tracking-widest whitespace-nowrap;
+    background: var(--gold);
+    color: #0a0a0a;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 36px rgba(201, 168, 76, 0.45);
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border px-7 py-4 text-sm font-bold uppercase tracking-widest whitespace-nowrap;
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #fff;
+  }
+
+  .btn-outline:hover {
+    transform: translateY(-2px);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .gold-tag {
+    @apply inline-flex items-center rounded-full px-4 py-1 text-xs font-bold uppercase tracking-[0.2em];
+    color: var(--gold);
+    border: 1px solid var(--gold-border);
+    background: var(--gold-dim);
+  }
+
+  .service-card {
+    @apply rounded-2xl p-6;
+    background: var(--surface);
+    border: 1px solid var(--line);
+  }
+
+  .service-card:hover {
+    background: var(--gold-dim);
+    border-color: var(--gold-border);
+    transform: translateY(-3px);
+  }
+}
