@@ -9,6 +9,9 @@ import { config } from "./config.js";
 
 export interface Tracker {
   findByJobId(job_id: string): Promise<JobRecord | undefined>;
+  /** Secondary dedup: find any record matching company + title (case-insensitive).
+   *  Returns the first match or null. Used when job_id lookup returns nothing. */
+  findByCompanyTitle(company: string, jobTitle: string): Promise<JobRecord | null>;
   insert(record: JobRecord): Promise<void>;
   update(job_id: string, patch: Partial<JobRecord>): Promise<JobRecord>;
   listByStatus(status: JobStatus): Promise<JobRecord[]>;
@@ -45,6 +48,16 @@ export class JsonFileTracker implements Tracker {
 
   async findByJobId(job_id: string): Promise<JobRecord | undefined> {
     return (await this.read()).find((r) => r.job_id === job_id);
+  }
+
+  async findByCompanyTitle(company: string, jobTitle: string): Promise<JobRecord | null> {
+    const records = await this.all();
+    const c = company.trim().toLowerCase();
+    const t = jobTitle.trim().toLowerCase();
+    return records.find(
+      r => r.company.trim().toLowerCase() === c &&
+           r.job_title.trim().toLowerCase() === t
+    ) ?? null;
   }
 
   async insert(record: JobRecord): Promise<void> {
