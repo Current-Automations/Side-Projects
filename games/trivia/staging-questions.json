@@ -1,0 +1,193 @@
+{
+  "_README": "Staging bank for keep/cut review. NOT loaded by the app. 10 distinct categories; target ~20 questions each (a pool). At game start the board draws 5 (one per value tier) from each selected category, randomly. `subcategory` (optional) tags a question within a category; Movies & TV uses Movie/TV/Anime so you can filter at setup. `note` shows source/confidence: WEB-VERIFIED = checked live; Confident = within knowledge window; docx = from your Trivia Questions doc; NotebookLM = your researched batch; VERIFY = I still need to confirm this. Difficulty = clue specificity (tells at the bottom, bare at the top); final calibration happens at merge.",
+  "_status": "Skeleton: all 10 categories stood up and seeded. NOT yet filled to 20 each. 'fill' notes mark where more questions are needed.",
+  "categories": [
+    {
+      "id": "nfl",
+      "name": "NFL",
+      "_fill": "16/20 — solid. Trim duplicate answers and add 4 more.",
+      "questions": [
+        { "id": "nfl-1", "value": 200, "question": "In 2020 this Chiefs speedster went for 13 catches, 269 yards and 3 TDs — the best single game by a WR in fantasy history.", "answer": "Tyreek Hill", "note": "WEB-VERIFIED." },
+        { "id": "nfl-2", "value": 200, "question": "He tore his Achilles just 4 snaps into his Jets debut in 2023.", "answer": "Aaron Rodgers", "note": "Confident." },
+        { "id": "nfl-3", "value": 200, "question": "The Falcons blew a 28-3 lead in Super Bowl LI to which team?", "answer": "New England Patriots", "note": "Confident." },
+        { "id": "nfl-4", "value": 400, "question": "The Bears gave up two first-round picks in 2018 to acquire this edge rusher from the Raiders.", "answer": "Khalil Mack", "note": "Confident." },
+        { "id": "nfl-5", "value": 400, "question": "This Falcon racked up 300 receiving yards in a 2016 game vs Carolina, the most in a single game in the last decade.", "answer": "Julio Jones", "note": "WEB-VERIFIED." },
+        { "id": "nfl-6", "value": 400, "question": "The first Eagles-Chiefs Super Bowl (LVII) came down to a late holding penalty that set up the game-winning kick. Who won, 38-35?", "answer": "Kansas City Chiefs", "note": "Confident." },
+        { "id": "nfl-7", "value": 600, "question": "The Bills traded a 2020 first-round pick to Minnesota for Stefon Diggs; the Vikings used it (No. 22) to draft which star receiver?", "answer": "Justin Jefferson", "note": "Confident." },
+        { "id": "nfl-8", "value": 600, "question": "Down 3 with 13 seconds left in the 2021 divisional round, Mahomes drove the Chiefs to a tying FG and beat which team in OT?", "answer": "Buffalo Bills", "note": "Confident." },
+        { "id": "nfl-9", "value": 600, "question": "This Rams receiver won the 2021 'triple crown,' leading the NFL in catches, yards and touchdowns.", "answer": "Cooper Kupp", "note": "Confident." },
+        { "id": "nfl-10", "value": 800, "question": "In 2022 the Seahawks traded this QB to Denver for two firsts, two seconds and three players.", "answer": "Russell Wilson", "note": "Confident." },
+        { "id": "nfl-11", "value": 800, "question": "In 2020 this back rushed for 2,027 yards, the most in a season since 2009.", "answer": "Derrick Henry", "note": "Confident." },
+        { "id": "nfl-12", "value": 800, "question": "After rookie Jayden Daniels led Washington to a divisional upset of the top-seeded Lions in Detroit, which team ended the Commanders' run in the NFC title game?", "answer": "Philadelphia Eagles", "note": "Confident. 2024 season." },
+        { "id": "nfl-13", "value": 1000, "question": "Midseason 2019, the Jaguars sent this cornerback to the Rams for two firsts and a fourth.", "answer": "Jalen Ramsey", "note": "Confident." },
+        { "id": "nfl-14", "value": 1000, "question": "Which running back holds the single-game PPR fantasy record from before Tyreek Hill's day, with 59.5 points in 2013?", "answer": "Jamaal Charles", "note": "WEB-VERIFIED." },
+        { "id": "nfl-15", "value": 1000, "question": "Which receiver caught the walk-off 'Minneapolis Miracle' touchdown for the Vikings against the Saints in January 2018?", "answer": "Stefon Diggs", "note": "Confident." },
+        { "id": "nfl-16", "value": 1000, "question": "This QB played in the AFC West at the same time as Philip Rivers, Peyton Manning and Alex Smith.", "answer": "Derek Carr", "note": "NotebookLM. Verified plausible (Raiders 2014+)." }
+      ]
+    },
+    {
+      "id": "nba",
+      "name": "NBA",
+      "_fill": "13/20 — add 7.",
+      "questions": [
+        { "id": "nba-1", "value": 200, "question": "Down 3-1 in the 2016 Finals, this team became the first ever to complete the comeback, led by LeBron James.", "answer": "Cleveland Cavaliers", "note": "Confident." },
+        { "id": "nba-2", "value": 200, "question": "In a stunning February 2025 trade, the Mavericks sent Luka Doncic to the Lakers for which player?", "answer": "Anthony Davis", "note": "Confident." },
+        { "id": "nba-3", "value": 400, "question": "This team won its first-ever NBA title in 2023 with Nikola Jokic as Finals MVP.", "answer": "Denver Nuggets", "note": "Confident." },
+        { "id": "nba-4", "value": 400, "question": "Toronto traded DeMar DeRozan to San Antonio in 2018 to acquire which soon-to-be Finals MVP?", "answer": "Kawhi Leonard", "note": "Confident." },
+        { "id": "nba-5", "value": 600, "question": "On 2018 draft night Atlanta picked Luka Doncic third and traded him to Dallas for a future first and which other guard?", "answer": "Trae Young", "note": "Confident." },
+        { "id": "nba-6", "value": 600, "question": "The Celtics won the 2024 title, but this player took Finals MVP over Jayson Tatum.", "answer": "Jaylen Brown", "note": "Confident." },
+        { "id": "nba-7", "value": 600, "question": "This guard averaged a triple-double AND led the NBA in scoring in 2016-17.", "answer": "Russell Westbrook", "note": "Confident." },
+        { "id": "nba-8", "value": 800, "question": "As a No. 8 seed, this team rode Jimmy Butler all the way to the 2023 NBA Finals.", "answer": "Miami Heat", "note": "Confident." },
+        { "id": "nba-9", "value": 800, "question": "This superstar ruptured his Achilles in Game 5 of the 2019 Finals, then signed with Brooklyn.", "answer": "Kevin Durant", "note": "Confident." },
+        { "id": "nba-10", "value": 1000, "question": "Which rookie center did Minnesota send to Utah (with four firsts) in the 2022 Rudy Gobert trade?", "answer": "Walker Kessler", "note": "Confident." },
+        { "id": "nba-11", "value": 1000, "question": "This center won both the 2022 and 2023 NBA scoring titles.", "answer": "Joel Embiid", "note": "Confident." },
+        { "id": "nba-12", "value": 1000, "question": "In the 2019 Finals this Warrior tore his ACL, then ruptured his Achilles the next season.", "answer": "Klay Thompson", "note": "Confident." },
+        { "id": "nba-13", "value": 1000, "question": "Kawhi Leonard's bouncing Game 7 buzzer-beater over the 76ers came in which year's playoffs?", "answer": "2019", "note": "Confident." }
+      ]
+    },
+    {
+      "id": "mlb",
+      "name": "MLB",
+      "_fill": "7/20 — add ~13. Need recent World Series, stat leaders, more stars.",
+      "questions": [
+        { "id": "mlb-1", "value": 200, "question": "The Red Sox stunned fans by trading this MVP outfielder to the Dodgers in 2020.", "answer": "Mookie Betts", "note": "Confident." },
+        { "id": "mlb-2", "value": 400, "question": "Juan Soto signed the largest contract in pro sports history (15 years, $765M) with which team in December 2024?", "answer": "New York Mets", "note": "WEB-VERIFIED." },
+        { "id": "mlb-3", "value": 600, "question": "At the 2017 trade deadline the Astros acquired this future Hall-of-Fame pitcher, then won the World Series.", "answer": "Justin Verlander", "note": "Confident." },
+        { "id": "mlb-4", "value": 800, "question": "Washington traded Soto to San Diego in 2022; which young outfielder headlined the prospect haul they got back?", "answer": "James Wood", "note": "WEB-VERIFIED." },
+        { "id": "mlb-5", "value": 1000, "question": "The Padres flipped Soto to the Yankees in 2023; which pitcher was the key player San Diego received?", "answer": "Michael King", "note": "WEB-VERIFIED." },
+        { "id": "mlb-6", "value": 200, "question": "Which team won the 2024 World Series behind Shohei Ohtani, Mookie Betts and Freddie Freeman?", "answer": "Los Angeles Dodgers", "note": "Confident. Within cutoff (Oct 2024)." },
+        { "id": "mlb-7", "value": 600, "question": "This two-way superstar signed a 10-year, $700M deal with the Dodgers before the 2024 season.", "answer": "Shohei Ohtani", "note": "Confident." }
+      ]
+    },
+    {
+      "id": "nhl",
+      "name": "NHL",
+      "_fill": "5/20 — LEAN + VERIFY. My weakest sport; I'll web-verify thoroughly when filling.",
+      "questions": [
+        { "id": "nhl-1", "value": 200, "question": "This Oilers superstar is widely considered the best player in the world and a perennial scoring-title winner.", "answer": "Connor McDavid", "note": "Confident." },
+        { "id": "nhl-2", "value": 400, "question": "Which Florida team won its first Stanley Cup in 2024?", "answer": "Florida Panthers", "note": "Confident. Within cutoff (Jun 2024)." },
+        { "id": "nhl-3", "value": 600, "question": "In a 2022 blockbuster, the Flames traded Matthew Tkachuk to Florida for Jonathan Huberdeau and which defenseman?", "answer": "MacKenzie Weegar", "note": "VERIFY." },
+        { "id": "nhl-4", "value": 800, "question": "This expansion team reached the Stanley Cup Final in its very first season (2018) and won the Cup in 2023.", "answer": "Vegas Golden Knights", "note": "Confident." },
+        { "id": "nhl-5", "value": 1000, "question": "Which center did Buffalo trade to Vegas in 2021 after a neck-surgery dispute?", "answer": "Jack Eichel", "note": "VERIFY." }
+      ]
+    },
+    {
+      "id": "college-football",
+      "name": "College Football",
+      "_fill": "9/20 — add ~11. Lots of benched CFP content available (Watson-Renfrow, LSU/Burrow, Georgia b2b, 2024 bracket).",
+      "questions": [
+        { "id": "cfb-1", "value": 200, "question": "Which team won its first national championship in the 2025 College Football Playoff, beating Miami in the final?", "answer": "Indiana", "note": "WEB-VERIFIED." },
+        { "id": "cfb-2", "value": 200, "question": "This Texas QB from a legendary football family holds the highest NIL valuation in college sports (~$6.8M).", "answer": "Arch Manning", "note": "WEB-VERIFIED." },
+        { "id": "cfb-3", "value": 400, "question": "Behind third-string QB Cardale Jones, which team won the very first College Football Playoff after the 2014 season?", "answer": "Ohio State", "note": "Confident." },
+        { "id": "cfb-4", "value": 400, "question": "This Colorado two-way star won the 2024 Heisman Trophy.", "answer": "Travis Hunter", "note": "Confident." },
+        { "id": "cfb-5", "value": 600, "question": "Leading Miami in every 2025 ranking until selection day, this team got jumped for the last playoff spot and then declined to play any bowl in protest.", "answer": "Notre Dame", "note": "WEB-VERIFIED." },
+        { "id": "cfb-6", "value": 600, "question": "This LSU quarterback won the 2023 Heisman before going No. 2 in the NFL draft.", "answer": "Jayden Daniels", "note": "Confident." },
+        { "id": "cfb-7", "value": 800, "question": "In a double-overtime title game after the 2017 season, Alabama beat Georgia on a 41-yard 'second-and-26' touchdown thrown by which freshman QB?", "answer": "Tua Tagovailoa", "note": "Confident." },
+        { "id": "cfb-8", "value": 800, "question": "Miami QB Cam Ward went No. 1 overall in which NFL draft, after being a CFP snub story the prior season?", "answer": "2025", "note": "Confident." },
+        { "id": "cfb-9", "value": 1000, "question": "In the 2025 ACC chaos, which 7-5 team won the conference title while the league nearly missed the playoff entirely?", "answer": "Duke", "note": "WEB-VERIFIED. Deep cut." }
+      ]
+    },
+    {
+      "id": "college-basketball",
+      "name": "College Basketball",
+      "_fill": "5/20 — add ~15. VERIFY recent champs (2025 season post-cutoff).",
+      "questions": [
+        { "id": "cbb-1", "value": 1000, "question": "In 2018 this 16-seed became the first to ever beat a 1-seed in the men's NCAA tournament, stunning Virginia.", "answer": "UMBC (Retrievers)", "note": "Confident." },
+        { "id": "cbb-2", "value": 200, "question": "This Iowa guard became NCAA Division I basketball's all-time leading scorer in 2024, then went No. 1 in the WNBA draft.", "answer": "Caitlin Clark", "note": "Confident." },
+        { "id": "cbb-3", "value": 400, "question": "Which program won back-to-back men's national titles in 2023 and 2024?", "answer": "UConn", "note": "Confident." },
+        { "id": "cbb-4", "value": 600, "question": "This 7-4 Purdue center was a two-time national Player of the Year and led the Boilermakers to the 2024 title game.", "answer": "Zach Edey", "note": "Confident." },
+        { "id": "cbb-5", "value": 800, "question": "This 15-seed made a Cinderella run to the Elite Eight in 2022 behind coach... (Saint Peter's).", "answer": "Saint Peter's", "note": "Confident. (Reword on merge.)" }
+      ]
+    },
+    {
+      "id": "video-games",
+      "name": "Video Games",
+      "_fill": "17/20 — solid (your docx LoL/CoD/Elden + Minecraft/MCC). Add 3, balance value tiers.",
+      "questions": [
+        { "id": "vg-lol-1", "value": 200, "question": "This League of Legends champion is known as the 'Emperor of the Sands.'", "answer": "Azir", "note": "docx." },
+        { "id": "vg-lol-2", "value": 400, "question": "In LoL lore, who is Renekton's brother?", "answer": "Nasus", "note": "docx." },
+        { "id": "vg-lol-3", "value": 600, "question": "What does Katarina's 'Shunpo' translate to?", "answer": "Blink Step", "note": "docx." },
+        { "id": "vg-lol-4", "value": 800, "question": "Which LoL champion has the quote 'The forest holds many surprises'?", "answer": "Zyra", "note": "docx." },
+        { "id": "vg-lol-5", "value": 1000, "question": "Who is the only LoL champion to 'Dab' if you emote after a kill?", "answer": "Qiyana", "note": "docx." },
+        { "id": "vg-cod-1", "value": 200, "question": "What was the 5th Call of Duty game released?", "answer": "World at War", "note": "docx." },
+        { "id": "vg-cod-2", "value": 400, "question": "What number installment was Call of Duty: Ghosts?", "answer": "10th", "note": "docx." },
+        { "id": "vg-cod-3", "value": 600, "question": "In MW2, what perk removed your secondary weapon?", "answer": "One Man Army", "note": "docx." },
+        { "id": "vg-cod-4", "value": 800, "question": "In the original Black Ops, how many kills earned the attack dogs?", "answer": "11", "note": "docx." },
+        { "id": "vg-cod-5", "value": 1000, "question": "What was the blackbird / advanced UAV called in Black Ops 3?", "answer": "HATR", "note": "docx." },
+        { "id": "vg-er-1", "value": 200, "question": "Who was Malenia's mother in Elden Ring?", "answer": "Queen Marika", "note": "docx." },
+        { "id": "vg-er-2", "value": 400, "question": "Who was the daughter of Rennala and Radagon?", "answer": "Ranni", "note": "docx." },
+        { "id": "vg-er-3", "value": 600, "question": "Who is the half-wolf son of Ranni?", "answer": "Blaidd", "note": "docx." },
+        { "id": "vg-er-4", "value": 800, "question": "Who was Millicent's mother?", "answer": "Malenia", "note": "docx." },
+        { "id": "vg-er-5", "value": 1000, "question": "Who is the merchant near the Two Fingers in Roundtable Hold?", "answer": "Enia", "note": "docx." },
+        { "id": "vg-mc-1", "value": 600, "question": "In the Minecraft Championship (MCC), the final game that decides the winner is known by this name.", "answer": "Dodgebolt", "note": "NotebookLM/MCC wiki." },
+        { "id": "vg-mc-2", "value": 800, "question": "This person is the official co-organiser of MCC alongside Noxite.", "answer": "Smajor1995 (Scott)", "note": "NotebookLM/MCC wiki." }
+      ]
+    },
+    {
+      "id": "movies-tv",
+      "name": "Movies & TV",
+      "_fill": "27/~30 — well-seeded from docx + NotebookLM. Movie sub-pool is thin (4); add more films. Subcategories: Movie / TV / Anime.",
+      "questions": [
+        { "id": "mtv-anime-1", "value": 200, "question": "What is the name of the talking panda in Jujutsu Kaisen?", "answer": "Panda", "subcategory": "Anime", "note": "docx." },
+        { "id": "mtv-anime-2", "value": 400, "question": "In Jujutsu Kaisen, who is Megumi's father?", "answer": "Toji Fushiguro", "subcategory": "Anime", "note": "docx." },
+        { "id": "mtv-anime-3", "value": 400, "question": "What is the name of the Naruto jutsu that transfers objects and beings to and from another dimension?", "answer": "Kamui", "subcategory": "Anime", "note": "docx." },
+        { "id": "mtv-anime-4", "value": 600, "question": "In JJK, who refers to Itadori as his best friend when they first meet?", "answer": "Aoi Todo", "subcategory": "Anime", "note": "docx." },
+        { "id": "mtv-anime-5", "value": 600, "question": "Which JJK cursed spirit do the sorcerers nickname 'patch face'?", "answer": "Mahito", "subcategory": "Anime", "note": "docx." },
+        { "id": "mtv-anime-6", "value": 800, "question": "What is the name of Aoi Todo's innate technique in JJK?", "answer": "Boogie Woogie", "subcategory": "Anime", "note": "docx." },
+        { "id": "mtv-anime-7", "value": 800, "question": "Which JJK cursed spirit has a volcano for a head?", "answer": "Jogo", "subcategory": "Anime", "note": "docx." },
+        { "id": "mtv-anime-8", "value": 1000, "question": "Which JJK sorcerer's technique revolves around a 7:3 ratio?", "answer": "Kento Nanami", "subcategory": "Anime", "note": "docx." },
+        { "id": "mtv-anime-9", "value": 1000, "question": "Which JJK sorcerer is known for consuming cursed spirits?", "answer": "Suguru Geto", "subcategory": "Anime", "note": "docx." },
+        { "id": "mtv-tv-1", "value": 200, "question": "What animal is on House Stark's banner in Game of Thrones?", "answer": "Direwolf", "subcategory": "TV", "note": "docx." },
+        { "id": "mtv-tv-2", "value": 200, "question": "Which character does Chris Pratt play in Parks and Recreation?", "answer": "Andy Dwyer", "subcategory": "TV", "note": "docx." },
+        { "id": "mtv-tv-3", "value": 200, "question": "What colour is Spock's blood in Star Trek?", "answer": "Green", "subcategory": "TV", "note": "NotebookLM." },
+        { "id": "mtv-tv-4", "value": 400, "question": "Which house rules over Highgarden in Game of Thrones?", "answer": "House Tyrell", "subcategory": "TV", "note": "docx." },
+        { "id": "mtv-tv-5", "value": 400, "question": "What is the name of Jay's wife in Modern Family?", "answer": "Gloria", "subcategory": "TV", "note": "docx." },
+        { "id": "mtv-tv-6", "value": 400, "question": "In Parks and Rec, what is the name of the beloved miniature horse?", "answer": "Lil Sebastian", "subcategory": "TV", "note": "docx." },
+        { "id": "mtv-tv-7", "value": 600, "question": "Name the three Dunphy children in Modern Family.", "answer": "Haley, Alex and Luke", "subcategory": "TV", "note": "docx." },
+        { "id": "mtv-tv-8", "value": 600, "question": "What is the neighboring town Leslie Knope despises in Parks and Rec?", "answer": "Eagleton", "subcategory": "TV", "note": "docx." },
+        { "id": "mtv-tv-9", "value": 800, "question": "What is Andy Dwyer's FBI alter ego in Parks and Rec?", "answer": "Bert Macklin", "subcategory": "TV", "note": "docx." },
+        { "id": "mtv-tv-10", "value": 800, "question": "Which cat is forever chasing Tweety Bird?", "answer": "Sylvester", "subcategory": "TV", "note": "docx." },
+        { "id": "mtv-tv-11", "value": 1000, "question": "Who accidentally shoots Ron on the hunting trip in Parks and Rec?", "answer": "Tom Haverford", "subcategory": "TV", "note": "docx." },
+        { "id": "mtv-tv-12", "value": 1000, "question": "Who is Leslie Knope's celebrity crush on Parks and Rec?", "answer": "Joe Biden", "subcategory": "TV", "note": "docx." },
+        { "id": "mtv-mov-1", "value": 200, "question": "What is the first name of Harry Potter author J.K. Rowling?", "answer": "Joanne", "subcategory": "Movie", "note": "docx." },
+        { "id": "mtv-mov-2", "value": 400, "question": "What was the name of the plantation in Gone with the Wind?", "answer": "Tara", "subcategory": "Movie", "note": "NotebookLM." },
+        { "id": "mtv-mov-3", "value": 600, "question": "In The Lord of the Rings, what is the name of Gandalf's horse, 'lord of all horses'?", "answer": "Shadowfax", "subcategory": "Movie", "note": "docx." },
+        { "id": "mtv-mov-4", "value": 800, "question": "In Orwell's Animal Farm, what is the name of the hardworking but naive cart horse?", "answer": "Boxer", "subcategory": "Movie", "note": "docx. (Book, not film — recategorize if you want movies pure.)" }
+      ]
+    },
+    {
+      "id": "music",
+      "name": "Music",
+      "_fill": "8/20 — seeded from docx + NotebookLM. Subcategory by genre (Rock / Pop / Rap). Add ~12, ideally more recent/varied.",
+      "questions": [
+        { "id": "mus-1", "value": 200, "question": "Kurt Cobain was the frontman of which band?", "answer": "Nirvana", "subcategory": "Rock", "note": "docx." },
+        { "id": "mus-2", "value": 200, "question": "Which 2012 K-pop song by Psy was the first video to hit 1 billion YouTube views?", "answer": "Gangnam Style", "subcategory": "Pop", "note": "docx." },
+        { "id": "mus-3", "value": 400, "question": "Carl and the Passions changed their band name to what?", "answer": "The Beach Boys", "subcategory": "Rock", "note": "NotebookLM." },
+        { "id": "mus-4", "value": 400, "question": "Who was Kurt Cobain's wife when he died?", "answer": "Courtney Love", "subcategory": "Rock", "note": "docx." },
+        { "id": "mus-5", "value": 400, "question": "Justin Bieber sang in Spanish for the first time on a 2017 remix of which song?", "answer": "Despacito", "subcategory": "Pop", "note": "docx." },
+        { "id": "mus-6", "value": 600, "question": "The musician Richard Starkey is far better known by what name?", "answer": "Ringo Starr", "subcategory": "Rock", "note": "docx." },
+        { "id": "mus-7", "value": 800, "question": "Which band released the albums 'Tango in the Night,' 'Rumours' and 'Tusk'?", "answer": "Fleetwood Mac", "subcategory": "Rock", "note": "docx." },
+        { "id": "mus-8", "value": 1000, "question": "How many times are the words 'black' and 'yellow' said in Wiz Khalifa's 'Black and Yellow'? (closest guess wins)", "answer": "99 times", "subcategory": "Rap", "note": "docx. CLOSEST-WINS type — host judges nearest guess, no exact match needed." }
+      ]
+    },
+    {
+      "id": "general-knowledge",
+      "name": "General Knowledge",
+      "_fill": "12/20 — geography, science, history, Olympics, phobias, etc. Add ~8. (Could split into 2 via subcategory later.)",
+      "questions": [
+        { "id": "gk-1", "value": 200, "question": "How many rings are on the official Olympic flag?", "answer": "Five", "note": "NotebookLM." },
+        { "id": "gk-2", "value": 200, "question": "Where in your body is your patella located?", "answer": "The knee (kneecap)", "note": "NotebookLM." },
+        { "id": "gk-3", "value": 400, "question": "King Zog ruled which country?", "answer": "Albania", "note": "NotebookLM." },
+        { "id": "gk-4", "value": 400, "question": "Who was the first man to travel into space?", "answer": "Yuri Gagarin", "note": "NotebookLM." },
+        { "id": "gk-5", "value": 400, "question": "If you suffered from pogonophobia, what would you be afraid of?", "answer": "Beards", "note": "NotebookLM." },
+        { "id": "gk-6", "value": 600, "question": "Who was the first man to run a sub-four-minute mile?", "answer": "Roger Bannister", "note": "NotebookLM." },
+        { "id": "gk-7", "value": 600, "question": "Whose autobiography was titled 'The Long Walk to Freedom'?", "answer": "Nelson Mandela", "note": "NotebookLM." },
+        { "id": "gk-8", "value": 600, "question": "Which martial art's name literally translates to 'gentle way'?", "answer": "Judo", "note": "NotebookLM." },
+        { "id": "gk-9", "value": 800, "question": "Who is credited with the discovery of radium?", "answer": "The Curies (Marie & Pierre)", "note": "NotebookLM." },
+        { "id": "gk-10", "value": 800, "question": "On the Mohs scale of hardness, what is the softest mineral?", "answer": "Talc", "note": "NotebookLM." },
+        { "id": "gk-11", "value": 1000, "question": "What is the Latin motto of the Olympics, meaning 'Faster, Higher, Stronger'?", "answer": "Citius, Altius, Fortius", "note": "NotebookLM." },
+        { "id": "gk-12", "value": 1000, "question": "Introduced in 1957, what was the world's first high-level programming language?", "answer": "FORTRAN", "note": "NotebookLM." }
+      ]
+    }
+  ]
+}

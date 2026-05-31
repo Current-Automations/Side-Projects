@@ -1,0 +1,37 @@
+{
+  "categories": [
+    {
+      "id": "lol",
+      "name": "League of Legends",
+      "questions": [
+        { "id": "lol-1", "value": 200, "question": "This champion is known as the \"Emperor of the Sands.\"", "answer": "Azir" },
+        { "id": "lol-2", "value": 400, "question": "In lore, who is Renekton's brother?", "answer": "Nasus" },
+        { "id": "lol-3", "value": 600, "question": "What does Katarina's \"Shunpo\" translate to?", "answer": "Blink Step" },
+        { "id": "lol-4", "value": 800, "question": "Which champion has the quote \"The forest holds many surprises\"?", "answer": "Zyra" },
+        { "id": "lol-5", "value": 1000, "question": "Who is the only champion to \"Dab\" if you emote after a kill?", "answer": "Qiyana" }
+      ]
+    },
+    {
+      "id": "cod",
+      "name": "Call of Duty",
+      "questions": [
+        { "id": "cod-1", "value": 200, "question": "What was the 5th Call of Duty game released?", "answer": "World at War" },
+        { "id": "cod-2", "value": 400, "question": "What number installment was Ghosts?", "answer": "10th" },
+        { "id": "cod-3", "value": 600, "question": "In MW2, what perk removed your secondary weapon?", "answer": "One Man Army" },
+        { "id": "cod-4", "value": 800, "question": "In Black Ops, how many kills were the attack dogs?", "answer": "11" },
+        { "id": "cod-5", "value": 1000, "question": "What was the blackbird / advanced UAV called in Black Ops 3?", "answer": "HATR" }
+      ]
+    },
+    {
+      "id": "elden",
+      "name": "Elden Ring",
+      "questions": [
+        { "id": "elden-1", "value": 200, "question": "Who was Malenia's mother?", "answer": "Queen Marika" },
+        { "id": "elden-2", "value": 400, "question": "Who was the daughter of Rennala and Radagon?", "answer": "Ranni" },
+        { "id": "elden-3", "value": 600, "question": "Who is the half-wolf son of Ranni?", "answer": "Blaidd" },
+        { "id": "elden-4", "value": 800, "question": "Who was Millicent's mother?", "answer": "Malenia" },
+        { "id": "elden-5", "value": 1000, "question": "Who is the merchant near the Two Fingers in Roundtable Hold?", "answer": "Enia" }
+      ]
+    }
+  ]
+}

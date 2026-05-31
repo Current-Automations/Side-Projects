@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trivia Editor</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 24px auto; padding: 0 16px; }
+    h1 { margin-bottom: 4px; }
+    .cat { border: 1px solid #ccc; border-radius: 6px; padding: 12px; margin: 12px 0; }
+    .cat-name { font-size: 18px; font-weight: 700; width: 60%; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #ddd; padding: 6px; text-align: left; vertical-align: top; }
+    td input, td textarea { width: 100%; box-sizing: border-box; }
+    .bar { position: sticky; top: 0; background: #fff; padding: 10px 0; display: flex; gap: 10px; align-items: center; }
+    button { padding: 8px 14px; cursor: pointer; }
+    .danger { color: #b00; }
+    .status { color: #080; }
+  </style>
+</head>
+<body>
+  <h1>Trivia Editor</h1>
+  <p><a href="host.html">&larr; Back to game</a> &nbsp;|&nbsp; <a href="/api/questions/export">Download backup</a></p>
+  <div class="bar">
+    <button id="add-cat" type="button">+ Add Category</button>
+    <button id="save" type="button">Save All</button>
+    <span id="status" class="status"></span>
+  </div>
+  <div id="cats"></div>
+  <script src="app.js"></script>
+  <script src="editor.js"></script>
+</body>
+</html>
