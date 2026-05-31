@@ -71,7 +71,14 @@ export type IngestResult =
  */
 export async function ingestJob(job: ParsedJob, tracker: Tracker): Promise<IngestResult> {
   const job_id = computeJobId(job);
-  const existing = await tracker.findByJobId(job_id);
+  let existing = await tracker.findByJobId(job_id);
+
+  // Secondary check: same job on a different board gets a different job_id.
+  // Catch it by company + title before treating it as new.
+  if (!existing) {
+    existing = (await tracker.findByCompanyTitle(job.company, job.job_title)) ?? undefined;
+  }
+
   const now = new Date().toISOString();
 
   if (existing) {
