@@ -1,3 +1,6 @@
+> DEPRECATED 2026-05-31. Replaced by SCOUT_PROMPT.md (daily) + GENERATE_PROMPT.md (on-demand).
+> This file is kept for reference only. Do not use it as a scheduled routine.
+
 # Job Scout — daily routine prompt
 
 Paste the block between the `=== PROMPT START/END ===` markers into your
