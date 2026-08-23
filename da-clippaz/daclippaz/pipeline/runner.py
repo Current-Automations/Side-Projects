@@ -12,7 +12,7 @@ import json
 import logging
 import shutil
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 from .jobs import publish_dir
 from .segmentation import compute_clip_windows, run_clipping
@@ -56,10 +56,12 @@ def _job_priority(job_path: Path) -> int:
         return 5
 
 
-def run_pipeline(config: Dict[str, Any]) -> int:
+def run_pipeline(config: Dict[str, Any]) -> Tuple[int, int]:
     """Process every pending job in ``jobs_root`` once, then return.
 
-    Returns the number of jobs processed.
+    Returns ``(processed, failed)``. The caller turns a non-zero failure count
+    into a non-zero exit code, otherwise a scheduled run that failed every job
+    looks identical to one that clipped everything.
     """
     jobs_root = Path(config["jobs_root"])
     jobs_root.mkdir(parents=True, exist_ok=True)
@@ -80,21 +82,28 @@ def run_pipeline(config: Dict[str, Any]) -> int:
 
     if not pending:
         logger.info("No pending jobs in %s", jobs_root)
-        return 0
+        return 0, 0
 
     pending.sort(key=lambda item: (item[0], item[1].name))
     logger.info("Processing %d pending job(s) in %s", len(pending), jobs_root)
 
+    failed = 0
     for _, job_dir in pending:
         try:
-            process_job(job_dir, config)
+            if not process_job(job_dir, config):
+                failed += 1
         except Exception:
+            failed += 1
             logger.exception("Unexpected error while processing job: %s", job_dir)
 
-    return len(pending)
+    if failed:
+        logger.error("%d of %d job(s) did not complete", failed, len(pending))
+
+    return len(pending), failed
 
 
-def process_job(job_dir: Path, config: Dict[str, Any]) -> None:
+def process_job(job_dir: Path, config: Dict[str, Any]) -> bool:
+    """Process one job folder. Returns True only if it completed."""
     job_path = job_dir / "job.json"
     status_path = job_dir / "status.json"
     clips_dir = job_dir / "clips"
@@ -102,7 +111,7 @@ def process_job(job_dir: Path, config: Dict[str, Any]) -> None:
 
     if not job_path.exists():
         logger.warning("Missing job.json in %s, skipping", job_dir)
-        return
+        return False
 
     job = json.loads(job_path.read_text(encoding="utf-8"))
 
@@ -198,6 +207,7 @@ def process_job(job_dir: Path, config: Dict[str, Any]) -> None:
             len(clip_paths),
             published,
         )
+        return True
 
     except Exception as exc:
         retries += 1
@@ -207,3 +217,4 @@ def process_job(job_dir: Path, config: Dict[str, Any]) -> None:
         else:
             _write_status(status_path, "failed", retries)
             logger.exception("Job failed permanently. job=%s retries=%d", job_dir.name, retries)
+        return False

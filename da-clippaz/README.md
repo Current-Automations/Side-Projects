@@ -124,6 +124,56 @@ wants a background window.
 very high bitrate. The remux always re-encodes rather than copying, otherwise a
 25 Mbps non-H.264 file would go to TikTok.
 
+### Picking a framing mode
+
+`crop` takes a 9:16 slice out of the middle and throws the rest away. On a
+16:9 source that is 56% of the width kept, 44% gone. For a talking head or a
+face cam that is the right call. For a screencast, a scoreboard, gameplay with
+a minimap, or anything where the edges carry meaning, it is destructive: text
+gets cut off mid-word and the clip is unreadable.
+
+Use `blur` for those. It fits the whole frame in and fills the rest with a
+blurred copy, which is what most clipping accounts do with wide content.
+
+`smart` is for faces that move around the frame. It is roughly realtime and CPU
+bound, so it costs about 12x what `crop` does.
+
+### Long sources
+
+`max_clips_per_video` defaults to 40, which covers about 40 minutes at 60s
+clips. A three hour Twitch VOD hits that cap at the 39 minute mark and the rest
+is not clipped. The cap is not silent, it logs how much was dropped, but for a
+full VOD raise it (180 covers three hours).
+
+### Where `work/` lives
+
+`work/` holds downloads, job folders and rendered clips, and it grows fast: one
+12 minute video is around 140MB by the time it is downloaded and clipped. If
+the repo sits inside OneDrive, Dropbox or any synced folder, every byte of that
+gets uploaded. Point `input_dir`, `output_dir`, `temp_dir` and `jobs_root` at a
+path outside the synced folder, for example `D:/daclippaz/work`.
+
+### Exit codes
+
+`run` exits 1 if any job failed to complete, 0 otherwise, so a scheduled task
+can tell the difference. `watch` runs until interrupted.
+
+### Troubleshooting
+
+**`No supported JavaScript runtime could be found`** from yt-dlp. Extraction
+without one is deprecated and some formats may be missing. Node counts as a
+runtime; add `--js-runtimes node` to a yt-dlp call to test, or install deno. On
+the videos tested so far it made no difference to the formats offered, so this
+is a warning to watch rather than an immediate problem.
+
+**`not a valid Flatbuffer buffer`** in smart mode. The `.tflite` model is
+corrupt. Re-fetch it with the curl command above; do not commit it or move it
+through anything that touches text encoding.
+
+**`Cannot find a valid font`** from drawtext. Set `captions.font_file` to a real
+`.ttf` path. Windows FFmpeg builds ship without fontconfig and cannot resolve a
+family name like "Sans".
+
 ### Config reference
 
 Everything below is settable in `defaults.json` or overridden per account.
@@ -140,6 +190,7 @@ Everything below is settable in `defaults.json` or overridden per account.
 | `clip_settings.min_tail_seconds` | Shortest allowed final clip. A shorter remainder is folded into the previous window instead of posted as a stub. |
 | `clip_settings.max_clips_per_video` | Hard cap on clips per source |
 | `tiktok.mode` | `crop`, `blur` or `smart` |
+| `tiktok.smart_face_model_path` | Optional explicit path to the face model. If set and missing, smart mode fails rather than quietly using a different model. |
 | `encoder.video` | `auto`, `nvenc` or `libx264`. `auto` probes `ffmpeg -encoders`. |
 | `captions.style` | `none`, `part_label`, or `karaoke` (rejected until built) |
 | `captions.font_file` | Path to a `.ttf`. Required on Windows, where FFmpeg ships without fontconfig and cannot resolve a family name. |

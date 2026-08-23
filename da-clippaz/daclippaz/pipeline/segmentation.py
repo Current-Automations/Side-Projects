@@ -72,6 +72,18 @@ def compute_clip_windows(
             break
         windows.append((int(start), int(end)))
         start += step
+
+    # A cap that quietly drops the back half of a three hour VOD looks
+    # identical to a clean run from the outside. Say so.
+    if windows and len(windows) >= max_clips and windows[-1][1] < duration - 1:
+        dropped = duration - windows[-1][1]
+        logger.warning(
+            "max_clips_per_video=%d reached; %.0fs of the source (%.0f%%) was not clipped",
+            max_clips,
+            dropped,
+            100 * dropped / duration,
+        )
+
     return windows
 
 
@@ -103,6 +115,9 @@ def run_clipping(
     mode = str(tiktok_cfg.get("mode", "crop")).strip().lower()
     smart_detect_every_n_frames = int(tiktok_cfg.get("smart_detect_every_n_frames", 5))
     smart_smoothing_alpha = float(tiktok_cfg.get("smart_smoothing_alpha", 0.25))
+    # The "model not found" error tells the user to set this key, so it has to
+    # actually be read. It was not.
+    smart_face_model_path = tiktok_cfg.get("smart_face_model_path")
 
     captions_cfg = captions_cfg or {}
     encoder_cfg = encoder_cfg or {}
@@ -127,13 +142,17 @@ def run_clipping(
     clip_paths: List[Path] = []
     total_parts = len(windows)
 
-    # Use integer-safe crop expression
-    # Crop width = round(input_height * (width / height))
-    crop_width_expr = f"round(in_h*{width}/{height})"
+    # Clamp on both axes. Cropping width alone assumes the source is wider
+    # than 9:16, and anything taller (a phone recording, a re-clip) made
+    # FFmpeg reject the filter outright with "invalid too big size for width".
+    # min() picks whichever axis actually needs trimming; the 2*floor keeps
+    # both dimensions even for yuv420p.
+    crop_w = rf"2*floor(min(in_w\,in_h*{width}/{height})/2)"
+    crop_h = rf"2*floor(min(in_h\,in_w*{height}/{width})/2)"
 
     crop_filter_str = (
-        f"crop={crop_width_expr}:in_h:"
-        f"(in_w-{crop_width_expr})/2:0,"
+        f"crop={crop_w}:{crop_h}:"
+        f"(in_w-{crop_w})/2:(in_h-{crop_h})/2,"
         f"scale={width}:{height}"
     )
 
@@ -175,6 +194,7 @@ def run_clipping(
                     target_height=height,
                     detect_every_n_frames=smart_detect_every_n_frames,
                     smoothing_alpha=smart_smoothing_alpha,
+                    tasks_model_path=smart_face_model_path,
                 )
                 if not rendered:
                     logger.error(

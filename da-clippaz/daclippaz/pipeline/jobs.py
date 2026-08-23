@@ -24,7 +24,14 @@ _SLUG_STRIP = re.compile(r"[^a-zA-Z0-9]+")
 def slugify(text: str, max_length: int = 60) -> str:
     """Turn a video title into a safe folder name."""
     slug = _SLUG_STRIP.sub("-", text).strip("-").lower()
-    return slug[:max_length].strip("-")
+    if len(slug) <= max_length:
+        return slug
+    # Cut at the last whole word so the folder name still reads as the title
+    # rather than ending mid-word.
+    cut = slug[:max_length]
+    if "-" in cut:
+        cut = cut[: cut.rindex("-")]
+    return cut.strip("-")
 
 
 def new_job_id() -> str:

@@ -53,3 +53,11 @@ def test_create_job_can_move_the_source_in(tmp_path):
     # The file has to leave input_dir, or the next poll adopts it again.
     assert not source.exists()
     assert (job_dir / "source.mkv").exists()
+
+
+def test_slug_cuts_on_a_word_boundary():
+    title = "New Skills v1 2 brings wait what writing for agents and fixes grill me"
+    slug = slugify(title)
+    assert len(slug) <= 60
+    # No half-words at the end, and no trailing dash.
+    assert slug == "new-skills-v1-2-brings-wait-what-writing-for-agents-and"

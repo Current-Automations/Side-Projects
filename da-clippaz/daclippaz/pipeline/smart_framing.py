@@ -96,13 +96,21 @@ def _is_scene_change(prev_small, prev_hist, curr_small, curr_hist) -> bool:
 
 
 def _resolve_face_model_path(tasks_model_path: Optional[str | Path]) -> Path:
-    candidates: List[Path] = []
-    if tasks_model_path:
-        candidates.append(Path(tasks_model_path))
+    # An explicitly configured path is a statement of intent. Falling back to a
+    # bundled model when it is missing means a typo in the config silently
+    # renders every clip with a different model than the one asked for.
+    for setting, value in (
+        ("tiktok.smart_face_model_path", tasks_model_path),
+        (ENV_FACE_MODEL_PATH, os.getenv(ENV_FACE_MODEL_PATH, "").strip() or None),
+    ):
+        if not value:
+            continue
+        resolved = Path(value).expanduser().resolve()
+        if resolved.is_file():
+            return resolved
+        raise RuntimeError(f"{setting} points at a file that does not exist: {resolved}")
 
-    env_path = os.getenv(ENV_FACE_MODEL_PATH, "").strip()
-    if env_path:
-        candidates.append(Path(env_path))
+    candidates: List[Path] = []
 
     # Fallback locations so smart mode works without changing segmentation wiring.
     candidates.extend(

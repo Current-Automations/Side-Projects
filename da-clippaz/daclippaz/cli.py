@@ -15,6 +15,7 @@ its own format, crop mode and output folder.
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 from .config import load_config, load_account_config, list_accounts, ValidationError
@@ -125,9 +126,12 @@ def main(argv: list[str] | None = None) -> None:
             if not args.url:
                 parser.error("--url is required when --source youtube is used")
                 return
-            ingest_youtube(args.url, config)
+            if not ingest_youtube(args.url, config):
+                sys.exit(1)
         else:
-            run_pipeline(config)
+            _, failed = run_pipeline(config)
+            if failed:
+                sys.exit(1)
 
     elif args.command == "watch":
         watch(config)

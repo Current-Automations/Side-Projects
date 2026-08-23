@@ -24,3 +24,16 @@ def test_max_clips_is_respected():
 
 def test_overlap_at_or_above_clip_length_yields_nothing():
     assert compute_clip_windows(185.0, 60, 60, 10) == []
+
+
+def test_max_clips_truncation_is_logged(caplog):
+    # A cap that quietly drops most of a long VOD must not look like a clean run.
+    with caplog.at_level("WARNING"):
+        compute_clip_windows(10800.0, 60, 2, 40)
+    assert "max_clips_per_video" in caplog.text
+
+
+def test_no_warning_when_the_whole_source_fits(caplog):
+    with caplog.at_level("WARNING"):
+        compute_clip_windows(185.0, 60, 2, 40)
+    assert caplog.text == ""

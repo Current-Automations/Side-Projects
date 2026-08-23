@@ -64,6 +64,7 @@ def download_video(
         "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best",
         "merge_output_format": "mp4",
         "quiet": True,
+        "noprogress": not hooks,
         "progress_hooks": hooks,
     }
 
@@ -124,20 +125,25 @@ def _download_youtube(url: str, output_template: Path) -> Dict[str, Any]:
     info: Dict[str, Any] = {}
 
     if yt_dlp is not None:
+        # quiet alone still prints the progress bar, which floods an
+        # unattended run's log with hundreds of lines. Match the container to
+        # what download_video asks for so both paths land on mp4.
         ydl_opts = {
             "outtmpl": str(output_template),
-            "format": "bestvideo+bestaudio/best",
+            "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best",
+            "merge_output_format": "mp4",
             "quiet": True,
+            "noprogress": True,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
     else:
         cmd = [
             "yt-dlp",
-            "-f",
-            "bestvideo+bestaudio/best",
-            "-o",
-            str(output_template),
+            "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best",
+            "--merge-output-format", "mp4",
+            "--no-progress",
+            "-o", str(output_template),
             url,
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
@@ -155,7 +161,7 @@ def _download_youtube(url: str, output_template: Path) -> Dict[str, Any]:
     return info
 
 
-def ingest_youtube(url: str, config: Dict[str, Any]) -> None:
+def ingest_youtube(url: str, config: Dict[str, Any]) -> bool:
     """Download a video, create a job for it, and clip it."""
 
     jobs_root = Path(config["jobs_root"])
@@ -218,4 +224,4 @@ def ingest_youtube(url: str, config: Dict[str, Any]) -> None:
     )
 
     logger.info("Ingested %s into job %s", url, job_id)
-    process_job(job_dir, config)
+    return process_job(job_dir, config)
