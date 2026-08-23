@@ -14,6 +14,8 @@ import time
 from pathlib import Path
 from typing import Any, Dict
 
+from daclippaz.ffmpeg_utils import probe_duration
+from daclippaz.pipeline.jobs import VIDEO_SUFFIXES, create_job
 from daclippaz.pipeline.runner import process_job
 
 logger = logging.getLogger(__name__)
@@ -51,6 +53,51 @@ def _load_priority(job_path: Path) -> int:
         return 5
 
 
+def _adopt_dropped_files(config: Dict[str, Any], seen_sizes: Dict[Path, int]) -> int:
+    """Turn video files dropped in ``input_dir`` into pending jobs.
+
+    A file is only picked up once its size has stopped changing between polls,
+    otherwise a job gets created around a copy that is still being written and
+    the clip windows are computed from a truncated duration.
+    """
+    input_dir = Path(config["input_dir"])
+    input_dir.mkdir(parents=True, exist_ok=True)
+
+    created = 0
+    for path in sorted(input_dir.iterdir()):
+        if not path.is_file() or path.suffix.lower() not in VIDEO_SUFFIXES:
+            continue
+
+        try:
+            size = path.stat().st_size
+        except OSError:
+            continue
+
+        if seen_sizes.get(path) != size or size == 0:
+            seen_sizes[path] = size
+            logger.debug("Waiting for %s to finish copying (%d bytes)", path.name, size)
+            continue
+
+        seen_sizes.pop(path, None)
+        try:
+            duration = probe_duration(path)
+            job_dir = create_job(
+                path,
+                config,
+                duration,
+                metadata={"title": path.stem, "source": "input_dir"},
+                move_source=True,
+            )
+        except Exception:
+            logger.exception("Could not create a job for %s", path)
+            continue
+
+        logger.info("Created job %s from %s", job_dir.name, path.name)
+        created += 1
+
+    return created
+
+
 def watch(config: Dict[str, Any]) -> None:
     jobs_root = Path(config["jobs_root"])
     jobs_root.mkdir(parents=True, exist_ok=True)
@@ -59,10 +106,19 @@ def watch(config: Dict[str, Any]) -> None:
     if poll < 1:
         poll = 1
 
-    logger.info("Watcher started. jobs_root=%s poll_interval_seconds=%s", jobs_root, poll)
+    logger.info(
+        "Watcher started. input_dir=%s jobs_root=%s poll_interval_seconds=%s",
+        Path(config["input_dir"]),
+        jobs_root,
+        poll,
+    )
+
+    seen_sizes: Dict[Path, int] = {}
 
     try:
         while True:
+            _adopt_dropped_files(config, seen_sizes)
+
             pending_jobs = []
             logger.debug("Scanning %s for pending jobs", jobs_root)
 

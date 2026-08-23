@@ -9,8 +9,6 @@ from __future__ import annotations
 import json
 import logging
 import subprocess
-import uuid
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple
 
@@ -21,7 +19,9 @@ try:
 except ImportError:
     yt_dlp = None
 
-from .segmentation import compute_clip_windows, run_clipping
+from ..ffmpeg_utils import probe_duration
+from .jobs import create_job, new_job_id
+from .runner import process_job
 
 
 def download_video(
@@ -110,17 +110,7 @@ def download_video(
     source_path = candidates[0]
 
     if duration <= 0:
-        try:
-            probe_cmd = [
-                "ffprobe", "-v", "error",
-                "-show_entries", "format=duration",
-                "-of", "default=noprint_wrappers=1:nokey=1",
-                str(source_path),
-            ]
-            res = subprocess.run(probe_cmd, capture_output=True, text=True, check=True)
-            duration = float(res.stdout.strip())
-        except Exception:
-            pass
+        duration = probe_duration(source_path)
 
     logger.info("Downloaded '%s' to %s (%.0fs)", title, source_path, duration)
     return source_path, title, duration
@@ -166,17 +156,14 @@ def _download_youtube(url: str, output_template: Path) -> Dict[str, Any]:
 
 
 def ingest_youtube(url: str, config: Dict[str, Any]) -> None:
-    """Ingest a YouTube video and perform fixed-interval clipping."""
+    """Download a video, create a job for it, and clip it."""
 
     jobs_root = Path(config["jobs_root"])
     jobs_root.mkdir(parents=True, exist_ok=True)
 
-    job_id = str(uuid.uuid4())
+    job_id = new_job_id()
     job_dir = jobs_root / job_id
-    clips_dir = job_dir / "clips"
-
     job_dir.mkdir(parents=True, exist_ok=True)
-    clips_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info("Downloading video from %s", url)
 
@@ -207,95 +194,28 @@ def ingest_youtube(url: str, config: Dict[str, Any]) -> None:
         duration = secs
 
     if duration is None:
-        # Fallback to ffprobe
-        try:
-            probe_cmd = [
-                "ffprobe",
-                "-v",
-                "error",
-                "-show_entries",
-                "format=duration",
-                "-of",
-                "default=noprint_wrappers=1:nokey=1",
-                str(source_path),
-            ]
-            res = subprocess.run(probe_cmd, capture_output=True, text=True, check=True)
-            duration = float(res.stdout.strip()) if res.stdout.strip() else None
-        except Exception:
-            duration = None
+        duration = probe_duration(source_path)
 
-    if duration is None:
-        raise RuntimeError("Unable to determine duration of downloaded video")
-
-    # Compute clip windows
-    clip_cfg = config["clip_settings"]
-    clip_length = clip_cfg["clip_length_seconds"]
-    overlap = clip_cfg["overlap_seconds"]
-    max_clips = clip_cfg["max_clips_per_video"]
-
-    min_tail = int(clip_cfg.get("min_tail_seconds", 10))
-    windows = compute_clip_windows(duration, clip_length, overlap, max_clips, min_tail)
-
-    # Run clipping
-    clip_paths = run_clipping(
+    # The download and the clipping are two different jobs. Clipping here and
+    # then writing status "pending" meant the runner picked the same job up and
+    # cut every clip a second time, overwriting the first set. Ingest now only
+    # creates the job, and the runner is the single place clipping happens.
+    job_dir = create_job(
         source_path,
-        windows,
-        clips_dir,
-        config.get("tiktok", {}),
-        clip_format=clip_cfg.get("format", "parts"),
-        captions_cfg=config.get("captions", {}),
-        encoder_cfg=config.get("encoder", {}),
-        source_title=title,
-    )
-
-    # Write job.json
-    job_json = {
-        "job_id": job_id,
-        "source_path": str(source_path),
-        "created_at": datetime.utcnow().isoformat() + "Z",
-        "priority": 5,
-        "parameters": clip_cfg,
-        "metadata": {
+        config,
+        float(duration),
+        metadata={
             "title": title,
             "uploader": uploader,
             "source_url": url,
-            "duration": duration,
+            "source": "youtube",
         },
-    }
-
-    with (job_dir / "job.json").open("w", encoding="utf-8") as f:
-        json.dump(job_json, f, indent=2)
-
-    # Write status.json
-    status = {
-        "state": "pending",
-        "retries": 0,
-    }
-
-    with (job_dir / "status.json").open("w", encoding="utf-8") as f:
-        json.dump(status, f, indent=2)
-
-    # Write logs.txt
-    with (job_dir / "logs.txt").open("w", encoding="utf-8") as f:
-        f.write(f"Downloaded {url} to {source_path}\n")
-        f.write(f"Generated {len(clip_paths)} clips\n")
-
-    # Write metadata.json
-    metadata_json = {
-        "source_url": url,
-        "title": title,
-        "duration": duration,
-        "clip_length_seconds": clip_length,
-        "overlap_seconds": overlap,
-        "clips_generated": len(clip_paths),
-    }
-
-    with (job_dir / "metadata.json").open("w", encoding="utf-8") as f:
-        json.dump(metadata_json, f, indent=2)
-
-    logger.info(
-        "Ingested YouTube video %s into job %s with %d clips",
-        url,
-        job_id,
-        len(clip_paths),
+        job_id=job_id,
     )
+
+    (job_dir / "logs.txt").write_text(
+        f"Downloaded {url} to {source_path}\n", encoding="utf-8"
+    )
+
+    logger.info("Ingested %s into job %s", url, job_id)
+    process_job(job_dir, config)

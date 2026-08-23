@@ -84,6 +84,7 @@ def run_clipping(
     captions_cfg: Optional[Dict[str, Any]] = None,
     encoder_cfg: Optional[Dict[str, Any]] = None,
     source_title: Optional[str] = None,
+    temp_dir: Optional[Path] = None,
 ) -> List[Path]:
     """Cut clips from a source video using FFmpeg.
 
@@ -108,6 +109,13 @@ def run_clipping(
     video_args = video_encode_args(encoder_cfg)
 
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Smart mode writes a large scratch file per clip. Keeping it out of the
+    # clips folder means a crash never leaves half-rendered files sitting where
+    # finished ones belong.
+    scratch_dir = Path(temp_dir) if temp_dir else output_dir
+    scratch_dir.mkdir(parents=True, exist_ok=True)
+
     logger.info(
         "Clipping mode=%s format=%s encoder=%s clips=%d",
         mode,
@@ -152,8 +160,8 @@ def run_clipping(
         )
 
         if mode == "smart":
-            temp_video_path = output_dir / f"clip_{idx:03d}.smart_video.mp4"
-            temp_audio_path = output_dir / f"clip_{idx:03d}.smart_audio.m4a"
+            temp_video_path = scratch_dir / f"clip_{idx:03d}.smart_video.mp4"
+            temp_audio_path = scratch_dir / f"clip_{idx:03d}.smart_audio.m4a"
             temp_video_path.unlink(missing_ok=True)
             temp_audio_path.unlink(missing_ok=True)
 

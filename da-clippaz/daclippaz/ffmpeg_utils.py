@@ -1,15 +1,14 @@
 """Utilities for interacting with FFmpeg.
 
-Currently includes functions to verify that FFmpeg is installed and
-available on the system ``PATH``.  Future milestones will add helpers
-for building command lines to cut, scale and encode clips.
+Verifying that FFmpeg is installed, and probing a source for its duration.
 """
 
 from __future__ import annotations
 
+import logging
 import shutil
 import subprocess
-import logging
+from pathlib import Path
 
 
 
@@ -33,3 +32,27 @@ def check_ffmpeg() -> None:
             "FFmpeg is installed but could not be executed. Please ensure it is functioning correctly."
         ) from exc
     logging.getLogger(__name__).debug("FFmpeg detected successfully")
+
+
+def probe_duration(source_path: Path) -> float:
+    """Return the duration of a media file in seconds.
+
+    Raises
+    ------
+    RuntimeError
+        If ffprobe fails or reports nothing usable. A source with an unknown
+        duration cannot be windowed, so guessing here would produce a job that
+        silently clips the wrong range.
+    """
+    cmd = [
+        "ffprobe",
+        "-v", "error",
+        "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1",
+        str(source_path),
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return float(result.stdout.strip())
+    except (OSError, subprocess.CalledProcessError, ValueError) as exc:
+        raise RuntimeError(f"Could not read duration of {source_path}") from exc

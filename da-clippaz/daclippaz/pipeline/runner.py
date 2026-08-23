@@ -10,19 +10,43 @@ from __future__ import annotations
 
 import json
 import logging
+import shutil
 from pathlib import Path
 from typing import Any, Dict
 
+from .jobs import publish_dir
 from .segmentation import compute_clip_windows, run_clipping
 
 logger = logging.getLogger(__name__)
 
 
-def _write_status(status_path: Path, state: str, retries: int) -> None:
-    status_path.write_text(
-        json.dumps({"state": state, "retries": retries}, indent=2),
-        encoding="utf-8",
-    )
+def _write_status(status_path: Path, state: str, retries: int, **extra: Any) -> None:
+    payload = {"state": state, "retries": retries}
+    payload.update(extra)
+    status_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+def _publish_clips(
+    clip_paths: list[Path],
+    config: Dict[str, Any],
+    job_id: str,
+    title: str | None,
+) -> Path:
+    """Move finished clips out of the job folder into ``output_dir``.
+
+    The job folder is working state: a big source file, json, scratch. What
+    gets posted should sit in one clean folder named after the video, or the
+    posting step means digging through uuids to find the clips.
+    """
+    target = publish_dir(config, job_id, title)
+    target.mkdir(parents=True, exist_ok=True)
+    for clip in clip_paths:
+        clip.replace(target / clip.name)
+        try:
+            clip.parent.rmdir()
+        except OSError:
+            pass
+    return target
+
 
 def _job_priority(job_path: Path) -> int:
     try:
@@ -135,6 +159,7 @@ def process_job(job_dir: Path, config: Dict[str, Any]) -> None:
             captions_cfg=config.get("captions", {}),
             encoder_cfg=config.get("encoder", {}),
             source_title=source_title,
+            temp_dir=Path(config["temp_dir"]) / job_dir.name,
         )
 
         # A run that produced no clips is a failure, not a completion. Marking
@@ -145,9 +170,34 @@ def process_job(job_dir: Path, config: Dict[str, Any]) -> None:
                 f"No clips produced from {len(windows)} window(s); see errors above"
             )
 
-        _write_status(status_path, "completed", retries)
+        # A partial render is not a clean success. Losing parts 2 and 3 of a
+        # series breaks it, so the shortfall goes in the status file and the
+        # log rather than being averaged away into "completed".
+        if len(clip_paths) < len(windows):
+            logger.warning(
+                "Job %s produced %d of %d clips; some windows failed",
+                job_dir.name,
+                len(clip_paths),
+                len(windows),
+            )
 
-        logger.info("Job completed: %s clips=%d", job_dir.name, len(clip_paths))
+        published = _publish_clips(clip_paths, config, job_dir.name, source_title)
+        shutil.rmtree(Path(config["temp_dir"]) / job_dir.name, ignore_errors=True)
+        _write_status(
+            status_path,
+            "completed",
+            retries,
+            clips_expected=len(windows),
+            clips_produced=len(clip_paths),
+            output_dir=str(published),
+        )
+
+        logger.info(
+            "Job completed: %s clips=%d ready to post in %s",
+            job_dir.name,
+            len(clip_paths),
+            published,
+        )
 
     except Exception as exc:
         retries += 1

@@ -23,6 +23,30 @@ Not built yet:
 - **Campaign monitoring.** Reading a clipping campaign's rules and configuring
   an account to match is still manual.
 
+## How work flows
+
+```
+work/input/          drop a video here
+   |  watcher waits for the file to stop growing, then
+   v
+work/jobs/<account>/<id>/    source + job.json + status.json
+   |  runner cuts, frames, captions
+   v
+work/output/<account>/<video-name>-<id>/    finished clips, ready to post
+```
+
+Three ways in, one way out:
+
+- **Drop a file** in `input_dir` and leave `watch` running. The watcher waits
+  until the file has stopped growing (so it never windows a half-copied file),
+  moves it into a job folder and processes it.
+- **`run --source youtube --url ...`** downloads, creates the job, clips it.
+- **`run`** on its own drains any job folder already sitting in `pending`.
+
+Finished clips are moved out of the job folder into `output_dir`, in a folder
+named after the video. The job folder keeps the source and the json, so a run
+can be inspected or retried after the fact.
+
 ## Accounts
 
 Each clipping account gets a profile under `configs/accounts/`. A profile only
@@ -79,11 +103,14 @@ python -m daclippaz run --account lol --source youtube --url <URL>
 python -m daclippaz watch --account lol                        # poll and process
 ```
 
+Drop a video into the account's `input_dir` while `watch` is running and it
+gets picked up on the next poll.
+
 `--config <path>` still works for a single standalone config file.
 
-`run` processes every pending job in the account's `jobs_root` and exits.
-`watch` polls the same folder on an interval and never exits, so it suits a
-background window rather than a scheduled task.
+`run` processes every pending job in the account's `jobs_root` and exits, which
+suits a scheduled task. `watch` polls on an interval and never exits, so it
+wants a background window.
 
 ### Framing modes
 
@@ -103,6 +130,10 @@ Everything below is settable in `defaults.json` or overridden per account.
 
 | Key | Meaning |
 |-----|---------|
+| `input_dir` | Watched for dropped video files |
+| `jobs_root` | Where job folders live. Working state. |
+| `output_dir` | Where finished clips are published, ready to post |
+| `temp_dir` | Scratch for smart mode intermediates, cleared after each job |
 | `clip_settings.format` | `parts` or `highlights` |
 | `clip_settings.clip_length_seconds` | Any positive integer. Campaigns dictate this. |
 | `clip_settings.overlap_seconds` | Seconds of overlap between consecutive clips |
@@ -123,9 +154,10 @@ Everything below is settable in `defaults.json` or overridden per account.
 | `daclippaz/encoders.py` | NVENC detection and encoder argument building |
 | `daclippaz/pipeline/segmentation.py` | Clip windows and the FFmpeg render |
 | `daclippaz/pipeline/ingest.py` | yt-dlp download and job creation |
+| `daclippaz/pipeline/jobs.py` | Job folder creation, naming, publish paths |
 | `daclippaz/pipeline/runner.py` | Job state machine, retries, one-shot drain |
 | `daclippaz/pipeline/smart_framing.py` | MediaPipe face tracking and reframing |
-| `daclippaz/watcher/watch.py` | Polling loop over `jobs_root` |
+| `daclippaz/watcher/watch.py` | Polls `input_dir` for drops and `jobs_root` for pending jobs |
 | `daclippaz/clipper.py` | Standalone clipper used only by the GUI. Overlaps `segmentation.py` and should be folded into it. |
 | `daclippaz/gui.py` | Tkinter front end |
 | `configs/` | `defaults.json` plus one file per account |
@@ -138,4 +170,5 @@ python -m pytest tests -q
 ```
 
 Covers config validation and merging, clip window maths (including the tail case
-that used to drop the end of every source) and caption filter construction.
+that used to drop the end of every source), caption filter construction, job
+creation and the watcher's settle logic.
