@@ -1,0 +1,14 @@
+{
+  "input_dir": "work/input/nateherk",
+  "output_dir": "work/output/nateherk",
+  "jobs_root": "work/jobs/nateherk",
+  "temp_dir": "work/temp/nateherk",
+  "clip_settings": {
+    "format": "highlights",
+    "clip_length_seconds": 50,
+    "overlap_seconds": 0,
+    "max_clips_per_video": 10
+  },
+  "tiktok": { "mode": "blur" },
+  "captions": { "style": "none" }
+}
