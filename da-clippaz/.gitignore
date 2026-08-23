@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+
+# Job folders, downloads and rendered clips are all local working data.
+work/
+
+# Standalone config, kept out so a local override never overwrites the
+# shared defaults or an account profile.
+configs/config.json
+
+# The face model is a binary asset that a text-mode round trip silently
+# corrupts. Fetch it with the command in the README instead of committing it.
+models/*.tflite
+models/*.task

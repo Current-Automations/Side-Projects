@@ -1,4 +1,4 @@
-"""Logging configuration for Da Clippaz.
+"""Logging configuration for Da Clippaz.
 
 This module centralises logging setup so that all parts of the
 application use consistent log formatting and obey the configured log

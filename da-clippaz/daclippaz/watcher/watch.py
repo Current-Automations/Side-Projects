@@ -1,9 +1,9 @@
 """Directory watcher for Da Clippaz.
 
 The watcher monitors the configured input directory for new video
-files, creates job folders and enqueues jobs for processing.  A
-lightweight polling approach will be used initially.  In PR1 this
-module contains a stub implementation that simply logs a message.
+files, creates job folders and enqueues jobs for processing. It polls
+``jobs_root`` on an interval, picks up anything in the ``pending`` state and
+hands it to the runner, lowest priority number first.
 """
 
 from __future__ import annotations
@@ -64,12 +64,12 @@ def watch(config: Dict[str, Any]) -> None:
     try:
         while True:
             pending_jobs = []
-            print("Scanning jobs...")
+            logger.debug("Scanning %s for pending jobs", jobs_root)
 
             for job_dir in jobs_root.iterdir():
                 if not job_dir.is_dir():
                     continue
-                print("Found job:", job_dir)
+                logger.debug("Found job dir: %s", job_dir)
 
                 job_json = job_dir / "job.json"
                 status_json = job_dir / "status.json"
@@ -79,7 +79,7 @@ def watch(config: Dict[str, Any]) -> None:
 
                 status = _load_status(status_json)
                 state = str(status.get("state", "pending")).lower()
-                print("STATE:", state)
+                logger.debug("Job %s state=%s", job_dir.name, state)
 
                 if state == "pending":
                     priority = _load_priority(job_json)
@@ -89,7 +89,7 @@ def watch(config: Dict[str, Any]) -> None:
 
             for _, job_dir in pending_jobs:
                 try:
-                    print("Processing:", job_dir)
+                    logger.info("Processing job: %s", job_dir.name)
                     process_job(job_dir, config)
                 except Exception:
                     logger.exception("Unexpected error while processing job: %s", job_dir)

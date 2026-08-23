@@ -1,0 +1,12 @@
+{
+  "output_dir": "work/output/lol",
+  "jobs_root": "work/jobs/lol",
+  "clip_settings": {
+    "format": "parts",
+    "clip_length_seconds": 60,
+    "overlap_seconds": 2,
+    "max_clips_per_video": 40
+  },
+  "tiktok": { "mode": "crop" },
+  "captions": { "style": "part_label", "show_title": true }
+}

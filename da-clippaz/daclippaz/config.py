@@ -61,15 +61,44 @@ def _validate_config(data: Dict[str, Any]) -> None:
     clip_length = clip_settings["clip_length_seconds"]
     overlap = clip_settings["overlap_seconds"]
     max_clips = clip_settings["max_clips_per_video"]
-    if clip_length not in (30, 60):
-        raise ValidationError("'clip_settings.clip_length_seconds' must be either 30 or 60")
-    # Validate overlap defaults based on clip length
-    if clip_length == 30 and overlap != 3:
-        raise ValidationError("'clip_settings.overlap_seconds' must be 3 when clip_length_seconds is 30")
-    if clip_length == 60 and overlap != 5:
-        raise ValidationError("'clip_settings.overlap_seconds' must be 5 when clip_length_seconds is 60")
+    # Campaign rules dictate clip length, so any positive value is allowed
+    # rather than a fixed 30/60 choice, and overlap is independent of it.
+    if not isinstance(clip_length, int) or clip_length <= 0:
+        raise ValidationError("'clip_settings.clip_length_seconds' must be a positive integer")
+    if not isinstance(overlap, int) or overlap < 0:
+        raise ValidationError("'clip_settings.overlap_seconds' must be a non-negative integer")
+    if overlap >= clip_length:
+        raise ValidationError(
+            "'clip_settings.overlap_seconds' must be less than 'clip_settings.clip_length_seconds'"
+        )
     if not isinstance(max_clips, int) or max_clips <= 0:
         raise ValidationError("'clip_settings.max_clips_per_video' must be a positive integer")
+
+    clip_format = clip_settings.get("format", "parts")
+    if clip_format not in ("parts", "highlights"):
+        raise ValidationError("'clip_settings.format' must be 'parts' or 'highlights'")
+
+    min_tail = clip_settings.get("min_tail_seconds", 10)
+    if not isinstance(min_tail, int) or min_tail < 0:
+        raise ValidationError("'clip_settings.min_tail_seconds' must be a non-negative integer")
+
+    encoder = data.get("encoder", {})
+    if not isinstance(encoder, dict):
+        raise ValidationError("'encoder' must be an object")
+    video_encoder = encoder.get("video", "auto")
+    if video_encoder not in ("auto", "nvenc", "libx264"):
+        raise ValidationError("'encoder.video' must be 'auto', 'nvenc', or 'libx264'")
+
+    captions = data.get("captions", {})
+    if not isinstance(captions, dict):
+        raise ValidationError("'captions' must be an object")
+    caption_style = captions.get("style", "part_label")
+    if caption_style not in ("none", "part_label", "karaoke"):
+        raise ValidationError("'captions.style' must be 'none', 'part_label', or 'karaoke'")
+    if caption_style == "karaoke":
+        raise ValidationError(
+            "'captions.style' 'karaoke' is not implemented yet. Use 'part_label' or 'none'"
+        )
 
     tiktok = data["tiktok"]
     if not isinstance(tiktok, dict):
@@ -134,3 +163,62 @@ def load_config(path: Path | str) -> Dict[str, Any]:
         raise ValidationError("Configuration must be a JSON object")
     _validate_config(data)
     return data
+
+
+def _deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+    """Recursively merge ``override`` onto a copy of ``base``."""
+    merged = dict(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def load_account_config(
+    account: str, configs_dir: Path | str = "configs"
+) -> Dict[str, Any]:
+    """Load one account profile merged over the shared defaults.
+
+    Layout::
+
+        configs/defaults.json          shared settings
+        configs/accounts/<name>.json   per-account overrides
+
+    An account profile only needs to state what differs from defaults, so a
+    highlights campaign account and a sequential-parts interest account can
+    live side by side without duplicating everything.
+    """
+    configs_dir = Path(configs_dir)
+    defaults_path = configs_dir / "defaults.json"
+    account_path = configs_dir / "accounts" / f"{account}.json"
+
+    if not defaults_path.is_file():
+        raise FileNotFoundError(f"Defaults file not found: {defaults_path}")
+    if not account_path.is_file():
+        available = sorted(
+            p.stem for p in (configs_dir / "accounts").glob("*.json")
+        )
+        raise FileNotFoundError(
+            f"Account profile not found: {account_path}. "
+            f"Available accounts: {', '.join(available) if available else 'none'}"
+        )
+
+    defaults = json.loads(defaults_path.read_text(encoding="utf-8"))
+    overrides = json.loads(account_path.read_text(encoding="utf-8"))
+    if not isinstance(defaults, dict) or not isinstance(overrides, dict):
+        raise ValidationError("Config files must contain JSON objects")
+
+    merged = _deep_merge(defaults, overrides)
+    merged["account"] = account
+    _validate_config(merged)
+    return merged
+
+
+def list_accounts(configs_dir: Path | str = "configs") -> list[str]:
+    """Return the names of every available account profile."""
+    accounts_dir = Path(configs_dir) / "accounts"
+    if not accounts_dir.is_dir():
+        return []
+    return sorted(p.stem for p in accounts_dir.glob("*.json"))

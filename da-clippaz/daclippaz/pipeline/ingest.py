@@ -233,7 +233,8 @@ def ingest_youtube(url: str, config: Dict[str, Any]) -> None:
     overlap = clip_cfg["overlap_seconds"]
     max_clips = clip_cfg["max_clips_per_video"]
 
-    windows = compute_clip_windows(duration, clip_length, overlap, max_clips)
+    min_tail = int(clip_cfg.get("min_tail_seconds", 10))
+    windows = compute_clip_windows(duration, clip_length, overlap, max_clips, min_tail)
 
     # Run clipping
     clip_paths = run_clipping(
@@ -241,6 +242,10 @@ def ingest_youtube(url: str, config: Dict[str, Any]) -> None:
         windows,
         clips_dir,
         config.get("tiktok", {}),
+        clip_format=clip_cfg.get("format", "parts"),
+        captions_cfg=config.get("captions", {}),
+        encoder_cfg=config.get("encoder", {}),
+        source_title=title,
     )
 
     # Write job.json

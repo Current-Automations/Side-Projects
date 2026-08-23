@@ -1,9 +1,9 @@
 """Splits a downloaded video into equal-length clips using FFmpeg.
 
 Supports three output modes:
-  original  — keep the source aspect ratio (no reframing)
-  crop      — centre-crop to 9:16 and scale to 1080x1920
-  blur      — blurred full-frame background with centred foreground at 1080x1920
+  original  , keep the source aspect ratio (no reframing)
+  crop      , centre-crop to 9:16 and scale to 1080x1920
+  blur      , blurred full-frame background with centred foreground at 1080x1920
 """
 
 from __future__ import annotations
@@ -84,7 +84,7 @@ def _build_cmd(
             "-map", "0:a?",
         ] + encode + [str(clip_path)]
 
-    # original — no video filter
+    # original , no video filter
     return base + encode + [str(clip_path)]
 
 
@@ -149,7 +149,7 @@ def clip_video(
         except subprocess.CalledProcessError as exc:
             logger.error("FFmpeg failed for clip %d: %s", idx, exc)
             if progress:
-                progress(f"  Clip {idx}: FFmpeg error — {exc}")
+                progress(f"  Clip {idx}: FFmpeg error , {exc}")
 
         start += clip_length
         idx += 1

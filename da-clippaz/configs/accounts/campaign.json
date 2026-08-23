@@ -1,0 +1,12 @@
+{
+  "output_dir": "work/output/campaign",
+  "jobs_root": "work/jobs/campaign",
+  "clip_settings": {
+    "format": "highlights",
+    "clip_length_seconds": 45,
+    "overlap_seconds": 0,
+    "max_clips_per_video": 12
+  },
+  "tiktok": { "mode": "smart" },
+  "captions": { "style": "part_label", "show_title": false }
+}

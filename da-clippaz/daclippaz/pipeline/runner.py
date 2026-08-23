@@ -1,11 +1,9 @@
-"""Pipeline runner for Da Clippaz.
+"""Pipeline runner for Da Clippaz.
 
-The runner orchestrates processing of jobs through various stages.  In
-PR1 it performs no real work; it logs that the pipeline would run.
-
-Future milestones will extend this to iterate over job folders,
-manage state transitions, invoke stages, handle retries and write
-status and metadata files to disk.
+``process_job`` takes one job folder from pending to completed or failed,
+writing ``status.json`` at each transition so a crash mid-run is recoverable.
+``run_pipeline`` drains every pending job in ``jobs_root`` once and returns,
+which is what a scheduled run wants rather than a process that never exits.
 """
 
 from __future__ import annotations
@@ -26,13 +24,50 @@ def _write_status(status_path: Path, state: str, retries: int) -> None:
         encoding="utf-8",
     )
 
-def run_pipeline(config: Dict[str, Any]) -> None:
+def _job_priority(job_path: Path) -> int:
+    try:
+        data = json.loads(job_path.read_text(encoding="utf-8"))
+        return int(data.get("priority", 5))
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        return 5
+
+
+def run_pipeline(config: Dict[str, Any]) -> int:
+    """Process every pending job in ``jobs_root`` once, then return.
+
+    Returns the number of jobs processed.
     """
-    Legacy run command support.
-    In PR3, most processing happens through the watcher.
-    This function exists to prevent CLI import errors.
-    """
-    logger.info("run command invoked. No-op in PR3. Use watch instead.")
+    jobs_root = Path(config["jobs_root"])
+    jobs_root.mkdir(parents=True, exist_ok=True)
+
+    pending = []
+    for job_dir in sorted(jobs_root.iterdir()):
+        if not job_dir.is_dir() or not (job_dir / "job.json").exists():
+            continue
+        status_path = job_dir / "status.json"
+        state = "pending"
+        if status_path.exists():
+            try:
+                state = str(json.loads(status_path.read_text(encoding="utf-8")).get("state", "pending")).lower()
+            except json.JSONDecodeError:
+                state = "pending"
+        if state == "pending":
+            pending.append((_job_priority(job_dir / "job.json"), job_dir))
+
+    if not pending:
+        logger.info("No pending jobs in %s", jobs_root)
+        return 0
+
+    pending.sort(key=lambda item: (item[0], item[1].name))
+    logger.info("Processing %d pending job(s) in %s", len(pending), jobs_root)
+
+    for _, job_dir in pending:
+        try:
+            process_job(job_dir, config)
+        except Exception:
+            logger.exception("Unexpected error while processing job: %s", job_dir)
+
+    return len(pending)
 
 
 def process_job(job_dir: Path, config: Dict[str, Any]) -> None:
@@ -83,10 +118,33 @@ def process_job(job_dir: Path, config: Dict[str, Any]) -> None:
         if duration is None:
             raise RuntimeError("Job metadata missing duration")
 
-        windows = compute_clip_windows(float(duration), clip_length, overlap, max_clips)
-        clip_paths = run_clipping(source_path, windows, clips_dir, config.get("tiktok", {}))
+        clip_settings = config.get("clip_settings", {})
+        clip_format = params.get("format", clip_settings.get("format", "parts"))
+        min_tail = int(params.get("min_tail_seconds", clip_settings.get("min_tail_seconds", 10)))
+        source_title = job.get("metadata", {}).get("title")
 
-        # Completed
+        windows = compute_clip_windows(
+            float(duration), clip_length, overlap, max_clips, min_tail
+        )
+        clip_paths = run_clipping(
+            source_path,
+            windows,
+            clips_dir,
+            config.get("tiktok", {}),
+            clip_format=clip_format,
+            captions_cfg=config.get("captions", {}),
+            encoder_cfg=config.get("encoder", {}),
+            source_title=source_title,
+        )
+
+        # A run that produced no clips is a failure, not a completion. Marking
+        # it completed would hide a broken encoder or a dead model file behind
+        # a green status and leave an empty clips folder nobody checks.
+        if windows and not clip_paths:
+            raise RuntimeError(
+                f"No clips produced from {len(windows)} window(s); see errors above"
+            )
+
         _write_status(status_path, "completed", retries)
 
         logger.info("Job completed: %s clips=%d", job_dir.name, len(clip_paths))

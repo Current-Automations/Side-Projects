@@ -1,12 +1,15 @@
 """Command-line interface for Da Clippaz.
 
-The CLI exposes two subcommands:
+Subcommands:
 
-* ``run`` – run the clipping pipeline on existing jobs.
-* ``watch`` – watch the input directory for new video files and process them automatically.
+* ``run`` - drain every pending job once, or ingest a YouTube URL and clip it.
+* ``watch`` - poll the jobs folder and process new jobs as they appear.
+* ``accounts`` - list the account profiles under ``configs/accounts/``.
 
-Both subcommands require a configuration file. The CLI verifies that
-FFmpeg is installed before proceeding.
+Configuration comes from either ``--account NAME`` (a profile merged over
+``configs/defaults.json``) or ``--config PATH`` for a single standalone file.
+The account form is the one to use day to day, since each clipping account has
+its own format, crop mode and output folder.
 """
 
 from __future__ import annotations
@@ -14,64 +17,74 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from .config import load_config, ValidationError
+from .config import load_config, load_account_config, list_accounts, ValidationError
 from .logging_utils import configure_logging
 from .ffmpeg_utils import check_ffmpeg
 from .pipeline.runner import run_pipeline
 from .watcher.watch import watch
-from .pipeline.ingest import ingest_youtube  # PR2 import
+from .pipeline.ingest import ingest_youtube
+
+
+def _add_config_args(parser: argparse.ArgumentParser) -> None:
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "--account",
+        type=str,
+        help="Account profile name from configs/accounts/ (merged over defaults.json)",
+    )
+    group.add_argument(
+        "--config",
+        type=str,
+        help="Path to a standalone configuration JSON file",
+    )
+    parser.add_argument(
+        "--configs-dir",
+        type=str,
+        default="configs",
+        help="Directory holding defaults.json and accounts/ (default: configs)",
+    )
 
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="daclippaz",
-        description="Da Clippaz – local video clipping pipeline"
+        description="Da Clippaz - local video clipping pipeline",
     )
 
     subparsers = parser.add_subparsers(
         dest="command",
         required=True,
-        help="Available commands"
+        help="Available commands",
     )
 
-    # RUN command
-    run_parser = subparsers.add_parser(
-        "run",
-        help="Run the clipping pipeline"
-    )
-
-    run_parser.add_argument(
-        "--config",
-        type=str,
-        required=True,
-        help="Path to the configuration JSON file"
-    )
-
+    run_parser = subparsers.add_parser("run", help="Run the clipping pipeline")
+    _add_config_args(run_parser)
     run_parser.add_argument(
         "--source",
         type=str,
         default="local",
         choices=["local", "youtube"],
-        help="Source type for processing"
+        help="Source type for processing",
     )
-
     run_parser.add_argument(
         "--url",
         type=str,
-        help="YouTube URL when --source youtube is used"
+        help="YouTube URL when --source youtube is used",
     )
 
-    # WATCH command
     watch_parser = subparsers.add_parser(
-        "watch",
-        help="Watch the input directory for new files"
+        "watch", help="Watch the jobs directory for new jobs"
     )
+    _add_config_args(watch_parser)
 
-    watch_parser.add_argument(
-        "--config",
+    accounts_parser = subparsers.add_parser(
+        "accounts", help="List available account profiles"
+    )
+    accounts_parser.add_argument(
+        "--configs-dir",
         type=str,
-        required=True,
-        help="Path to the configuration JSON file"
+        default="configs",
+        help="Directory holding defaults.json and accounts/ (default: configs)",
     )
 
     return parser
@@ -81,27 +94,33 @@ def main(argv: list[str] | None = None) -> None:
     parser = _build_parser()
     args = parser.parse_args(argv)
 
-    # Load configuration
-    config_path = Path(args.config)
+    if args.command == "accounts":
+        names = list_accounts(args.configs_dir)
+        if not names:
+            print(f"No account profiles found in {Path(args.configs_dir) / 'accounts'}")
+        else:
+            for name in names:
+                print(name)
+        return
+
     try:
-        config = load_config(config_path)
+        if args.account:
+            config = load_account_config(args.account, args.configs_dir)
+        else:
+            config = load_config(Path(args.config))
     except (FileNotFoundError, ValidationError) as exc:
         parser.error(str(exc))
         return
 
-    # Configure logging
     configure_logging(config.get("logging", {}))
 
-    # Check FFmpeg availability
     try:
         check_ffmpeg()
     except FileNotFoundError as exc:
         parser.error(str(exc))
         return
 
-    # Dispatch
     if args.command == "run":
-
         if args.source == "youtube":
             if not args.url:
                 parser.error("--url is required when --source youtube is used")

@@ -1,74 +1,141 @@
-# Da Clippaz
+# Da Clippaz
 
-Da Clippaz is a local video clipping pipeline built in Python.  Its goal is to provide a reliable, unattended way to process long-form recordings into short clips suitable for platforms such as TikTok.  The system watches an input directory for new recordings, splits them into overlapping clips on a fixed schedule and produces vertical 9:16 exports.  A modular architecture makes it easy to add more sophisticated features like highlight detection or scoring without rewriting the core pipeline.
+A local video clipping pipeline in Python. It takes a long recording (a YouTube
+upload, a Twitch VOD export, a local file), cuts it into vertical 9:16 clips and
+burns in captions, ready to post. Everything runs on this machine: FFmpeg,
+yt-dlp, MediaPipe and NVENC. No API keys, no per-clip cost.
 
 ## Status
 
-This repository currently contains the initial scaffold (milestone PR1).  The primary focus of this milestone is to set up a clean package structure, provide a command‑line interface and verify that the required runtime dependencies (Python 3.12 and FFmpeg) are available.  Future milestones will add the actual pipeline stages, a directory watcher, exporters and more comprehensive tests.
+Working end to end. Local files and YouTube URLs both ingest, all three framing
+modes render, captions burn in, and NVENC is used automatically when the card
+supports it.
+
+Verified on a 185s 1080p source: 4 clips at 1080x1920 in 15s with `crop` mode
+and NVENC.
+
+Not built yet:
+
+- **Posting.** Clips land in the output folder and get uploaded by hand.
+- **Karaoke captions.** The config option exists and is rejected at load time
+  with a clear error. The plan is faster-whisper for word-level timestamps,
+  which runs locally on the GPU.
+- **Campaign monitoring.** Reading a clipping campaign's rules and configuring
+  an account to match is still manual.
+
+## Accounts
+
+Each clipping account gets a profile under `configs/accounts/`. A profile only
+states what differs from `configs/defaults.json`, so a campaign account and a
+sequential-parts account can sit side by side without duplicating settings.
+
+```
+configs/defaults.json          shared settings
+configs/accounts/lol.json      parts format, crop mode
+configs/accounts/campaign.json highlights format, smart mode
+```
+
+Two clip formats:
+
+- **`parts`** cuts the whole source into sequential overlapping clips, each
+  labelled `Part N/Total`. Built for viewers who want the context around a
+  moment, not just the moment.
+- **`highlights`** cuts standalone clips with no part label, which is what most
+  paid campaigns want.
 
 ## Quick start
 
 ### Prerequisites
 
-1. Install **Python 3.12** on your machine.  The first version targets Python 3.12; it may work on Python 3.13, but compatibility is not guaranteed yet.
-2. Install **FFmpeg** and ensure it is available on your system `PATH`.  The CLI will attempt to run `ffmpeg -version` and will exit with a clear error if FFmpeg is not found.
+- **Python 3.12**
+- **FFmpeg** on `PATH`. The CLI runs `ffmpeg -version` and exits with a clear
+  error if it is missing.
+- An NVIDIA card is optional. Without one the encoder falls back to `libx264`
+  and logs that it did.
 
-### Installation
+### Install
 
-Clone this repository and create a virtual environment:
-
-```
-powershell
-python3.12 -m venv .venv
+```powershell
+py -3.12 -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Copy the example configuration to a working config file and edit paths as needed:
+Fetch the face model used by `smart` mode. It is not committed, because a
+text-mode round trip silently corrupts a `.tflite` and the failure only shows up
+at render time as `not a valid Flatbuffer buffer`:
 
-```
-powershell
-copy configs\config.example.json configs\config.json
-# Edit configs\config.json to point to your input/output/temp directories
+```powershell
+curl -L -o models\blaze_face_short_range.tflite `
+  https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite
 ```
 
 ### Usage
 
-Two subcommands are provided via the Python module entrypoint:
-
+```powershell
+python -m daclippaz accounts                                  # list profiles
+python -m daclippaz run --account lol                          # drain pending jobs once
+python -m daclippaz run --account lol --source youtube --url <URL>
+python -m daclippaz watch --account lol                        # poll and process
 ```
-powershell
-python -m daclippaz run --config configs\config.json
-python -m daclippaz watch --config configs\config.json
-```
 
-* `run`: run the clipping pipeline on jobs that already exist.  In this first milestone it simply verifies your configuration and FFmpeg installation.
-* `watch`: watch the configured input directory for new recordings.  A proper watcher will be added in a later milestone; in PR1 this is a placeholder.
+`--config <path>` still works for a single standalone config file.
+
+`run` processes every pending job in the account's `jobs_root` and exits.
+`watch` polls the same folder on an interval and never exits, so it suits a
+background window rather than a scheduled task.
+
+### Framing modes
+
+| Mode | What it does | Cost |
+|------|--------------|------|
+| `crop` | Centre-crop to 9:16, then scale | Fast, roughly 12x realtime with NVENC |
+| `blur` | Blurred full-frame background, video centred on top | Fast |
+| `smart` | MediaPipe face tracking drives a moving crop | Slow, roughly realtime, CPU bound in the detection pass |
+
+`smart` renders its intermediate through OpenCV, which writes MPEG-4 Part 2 at a
+very high bitrate. The remux always re-encodes rather than copying, otherwise a
+25 Mbps non-H.264 file would go to TikTok.
+
+### Config reference
+
+Everything below is settable in `defaults.json` or overridden per account.
+
+| Key | Meaning |
+|-----|---------|
+| `clip_settings.format` | `parts` or `highlights` |
+| `clip_settings.clip_length_seconds` | Any positive integer. Campaigns dictate this. |
+| `clip_settings.overlap_seconds` | Seconds of overlap between consecutive clips |
+| `clip_settings.min_tail_seconds` | Shortest allowed final clip. A shorter remainder is folded into the previous window instead of posted as a stub. |
+| `clip_settings.max_clips_per_video` | Hard cap on clips per source |
+| `tiktok.mode` | `crop`, `blur` or `smart` |
+| `encoder.video` | `auto`, `nvenc` or `libx264`. `auto` probes `ffmpeg -encoders`. |
+| `captions.style` | `none`, `part_label`, or `karaoke` (rejected until built) |
+| `captions.font_file` | Path to a `.ttf`. Required on Windows, where FFmpeg ships without fontconfig and cannot resolve a family name. |
 
 ### Project layout
 
-The code is organised as a package under `daclippaz/`.  Each submodule has a clear responsibility:
+| Folder / file | Purpose |
+|---|---|
+| `daclippaz/cli.py` | Argument parsing, account or config loading, dispatch |
+| `daclippaz/config.py` | Validation, defaults merge, account profiles |
+| `daclippaz/captioner.py` | Builds the `drawtext` filter chain |
+| `daclippaz/encoders.py` | NVENC detection and encoder argument building |
+| `daclippaz/pipeline/segmentation.py` | Clip windows and the FFmpeg render |
+| `daclippaz/pipeline/ingest.py` | yt-dlp download and job creation |
+| `daclippaz/pipeline/runner.py` | Job state machine, retries, one-shot drain |
+| `daclippaz/pipeline/smart_framing.py` | MediaPipe face tracking and reframing |
+| `daclippaz/watcher/watch.py` | Polling loop over `jobs_root` |
+| `daclippaz/clipper.py` | Standalone clipper used only by the GUI. Overlaps `segmentation.py` and should be folded into it. |
+| `daclippaz/gui.py` | Tkinter front end |
+| `configs/` | `defaults.json` plus one file per account |
+| `work/` | Local job folders, downloads, rendered clips. Not committed. |
 
-| Folder / file          | Purpose                                                     |
-|----------------------- |-------------------------------------------------------------|
-| `daclippaz/cli.py`     | Command‑line interface and argument parsing                 |
-| `daclippaz/config.py`  | Loading and validating JSON configuration files             |
-| `daclippaz/logging_utils.py` | Configure Python logging based on the config              |
-| `daclippaz/ffmpeg_utils.py`  | Check that FFmpeg is installed and available on the PATH |
-| `daclippaz/pipeline/`  | Pipeline definitions (job model, stages, runner)           |
-| `daclippaz/watcher/`   | Placeholder for directory watching logic                    |
-| `daclippaz/exporters/` | Future exporters (e.g. TikTok vertical video)              |
-| `daclippaz/detectors/` | Placeholders for highlight or score detection              |
-| `configs/`             | Example configuration files                                 |
-| `docs/`                | High‑level documentation for the codebase                   |
-| `tests/`               | Unit and integration tests                                  |
+### Tests
 
-### Contributing and roadmap
+```powershell
+python -m pytest tests -q
+```
 
-Contributions are tracked through pull requests per milestone.  The rough roadmap is:
-
-1. **PR1** – this scaffold, CLI skeleton, configuration validation and FFmpeg detection.
-2. **PR2** – implement the job model, pipeline runner and fixed‑interval clipping stage.
-3. **PR3** – add a watcher that creates jobs from dropped files and implements state persistence and retry logic.
-4. **PR4** – implement the TikTok exporter (crop and blur modes) and write integration tests using synthetic videos.
-5. **PR5** – finish documentation and publish a comprehensive runbook and technical specification in Notion (links will be added to `docs/ARCHITECTURE.md`).
+Covers config validation and merging, clip window maths (including the tail case
+that used to drop the end of every source) and caption filter construction.
