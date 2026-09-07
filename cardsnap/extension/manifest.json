@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "CardSnap",
+  "version": "0.1.0",
+  "description": "Snap trading card listings from live streams",
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": [
+    "*://*.whatnot.com/*",
+    "*://*.tiktok.com/*",
+    "*://*.instagram.com/*"
+  ],
+  "background": {
+    "service_worker": "dist/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.whatnot.com/*",
+        "*://*.tiktok.com/*",
+        "*://*.instagram.com/*"
+      ],
+      "js": ["dist/content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "CardSnap"
+  }
+}
