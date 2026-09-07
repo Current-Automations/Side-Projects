@@ -1,0 +1,32 @@
+[
+  {
+    "file": "sv3-arboliva-reverse-01.jpg",
+    "distribution": "single-hold",
+    "set_id": "sv03",
+    "set_name": "Obsidian Flames",
+    "card_name": "Arboliva",
+    "card_number": "21",
+    "finish": "reverse",
+    "notes": "reverse holo of a common; base art"
+  },
+  {
+    "file": "sv3-charizard-ex-sir-01.jpg",
+    "distribution": "single-hold",
+    "set_id": "sv03",
+    "set_name": "Obsidian Flames",
+    "card_name": "Charizard ex",
+    "card_number": "223",
+    "finish": "holo",
+    "notes": "special illustration rare, alt art, above official count"
+  },
+  {
+    "file": "break-mixed-pull-07.jpg",
+    "distribution": "pack-break",
+    "set_id": "sv03",
+    "set_name": "Obsidian Flames",
+    "card_name": "Pikachu",
+    "card_number": "63",
+    "finish": "normal",
+    "notes": "card is at ~30deg, motion blur, breaker's hand across corner"
+  }
+]

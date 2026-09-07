@@ -308,6 +308,37 @@ Build an authenticated dashboard at `/dashboard` showing the user's scan history
 
 ---
 
+## Pokémon-first rebuild (see the rebuild plan for full context)
+
+The 2026-09 discovery session moved CardSnap to Pokémon TCG first, a proprietary
+two-stage identifier (card retrieval + finish resolution) over a TCGdex catalog,
+and a white-label in-shop game as the label engine. The issues below are the
+sports-era backlog; they stay for reference but the rebuild plan supersedes the
+ordering.
+
+### KNOWN-BROKEN · extension correction contract · do not fix in place
+
+`extension/src/background.ts` posts `{ scan_id, corrected_name }` to
+`POST /api/scan/correct`; the route requires `{ scan_id, user_id, corrected_card: {...} }`.
+Every extension correction returns 400. The popup's free-text box cannot produce
+the required shape. This has never worked, so there is no correction data.
+
+**Resolution:** the shop game replaces this feedback path entirely (it captures
+images next to labels, which the scan path never did). Do not spend effort
+resurrecting the in-extension correction flow. If a lightweight "that's wrong"
+signal is still wanted in the extension later, design it fresh against the
+Pokémon identity shape.
+
+### Superseded / on hold from the sports backlog
+- ISSUE-09, ISSUE-15 (Stripe) — no paying users; deferred past the rebuild.
+- ISSUE-16, ISSUE-17 (web landing + dashboard) — landing page exists but is
+  sports-framed and will be redone; dashboard deferred.
+- Fine-tune pipeline (`lib/db/training.ts`) — stays dormant; the rebuild uses
+  retrieval, not fine-tuning. `status: 'succeeded'` in that file also violates
+  the `training_runs` CHECK constraint (`pending|running|completed|failed`).
+
+---
+
 ## Dependency Graph
 
 ```
