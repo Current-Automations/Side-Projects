@@ -1,0 +1,139 @@
+{
+  "category": "Pokemon",
+  "id": "sv03-198",
+  "illustrator": "Masako Tomii",
+  "image": "https://assets.tcgdex.net/en/sv/sv03/198",
+  "localId": "198",
+  "name": "Gloom",
+  "rarity": "Illustration rare",
+  "set": {
+    "cardCount": {
+      "official": 197,
+      "total": 230
+    },
+    "id": "sv03",
+    "logo": "https://assets.tcgdex.net/en/sv/sv03/logo",
+    "name": "Obsidian Flames",
+    "symbol": "https://assets.tcgdex.net/univ/sv/sv03/symbol"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": false,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "holo",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 725278,
+        "tcgplayer": 509944,
+        "cardtrader": 255640
+      },
+      "variantId": "jr7oetx1mqug9",
+      "pricing": {
+        "cardmarket": {
+          "updated": "2026-09-07T15:14:31.583Z",
+          "unit": "EUR",
+          "idProduct": 725278,
+          "avg": 17.45,
+          "low": 5.5,
+          "trend": 16.04,
+          "avg1": 16.16,
+          "avg7": 20.26,
+          "avg30": 17.41,
+          "avg-holo": null,
+          "low-holo": null,
+          "trend-holo": 0,
+          "avg1-holo": null,
+          "avg7-holo": null,
+          "avg30-holo": null
+        },
+        "tcgplayer": {
+          "unit": "USD",
+          "updated": "2026-09-07T15:14:43.800Z",
+          "holofoil": {
+            "productId": 509944,
+            "lowPrice": 17,
+            "midPrice": 24.63,
+            "highPrice": 181.99,
+            "marketPrice": 23.46,
+            "directLowPrice": 28.98
+          }
+        }
+      }
+    }
+  ],
+  "dexId": [
+    44
+  ],
+  "hp": 80,
+  "types": [
+    "Grass"
+  ],
+  "evolveFrom": "Oddish",
+  "description": "What appears to be drool is actually sweet honey. It is very sticky and clings stubbornly if touched.",
+  "stage": "Stage1",
+  "attacks": [
+    {
+      "cost": [
+        "Colorless"
+      ],
+      "name": "Inviting Scent",
+      "effect": "Switch in 1 of your opponent's Benched Pokémon to the Active Spot."
+    },
+    {
+      "cost": [
+        "Grass"
+      ],
+      "name": "Leaf Step",
+      "damage": 20
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Fire",
+      "value": "×2"
+    }
+  ],
+  "retreat": 2,
+  "regulationMark": "G",
+  "legal": {
+    "standard": false,
+    "expanded": true
+  },
+  "updated": "2026-08-20T08:26:31+01:00",
+  "pricing": {
+    "cardmarket": {
+      "updated": "2026-09-07T15:14:31.583Z",
+      "unit": "EUR",
+      "idProduct": 725278,
+      "avg": 17.45,
+      "low": 5.5,
+      "trend": 16.04,
+      "avg1": 16.16,
+      "avg7": 20.26,
+      "avg30": 17.41,
+      "avg-holo": null,
+      "low-holo": null,
+      "trend-holo": 0,
+      "avg1-holo": null,
+      "avg7-holo": null,
+      "avg30-holo": null
+    },
+    "tcgplayer": {
+      "unit": "USD",
+      "updated": "2026-09-07T15:14:43.800Z",
+      "holofoil": {
+        "productId": 509944,
+        "lowPrice": 17,
+        "midPrice": 24.63,
+        "highPrice": 181.99,
+        "marketPrice": 23.46,
+        "directLowPrice": 28.98
+      }
+    }
+  }
+}

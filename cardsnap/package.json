@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:extension": "node extension/build.mjs"
+    "build:extension": "node extension/build.mjs",
+    "catalog:ingest": "node --import tsx --env-file-if-exists=.env.local scripts/ingest-catalog.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.1",
@@ -29,6 +30,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5",
     "vitest": "^4.1.7"
   }
