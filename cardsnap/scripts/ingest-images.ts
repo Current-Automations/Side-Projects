@@ -8,7 +8,10 @@
  * Reads catalog_cards, not TCGdex. Run ingest-catalog first. Idempotent: a card
  * that already has an upstream image row is skipped unless --force.
  *
- *   npm run catalog:images -- [--set sv03] [--limit 20] [--dry-run] [--force]
+ *   npm run catalog:images -- [--prefix sv,swsh | --set sv03] [--limit 20] [--dry-run] [--force]
+ *
+ * --prefix takes a comma list of set-id prefixes (default: all cards in the DB).
+ * Use it to scope image storage to an era while under the free Storage tier.
  */
 
 import { getServerClient } from '../lib/db/server-client';
@@ -23,6 +26,7 @@ const opt = (n: string): string | undefined => {
 };
 
 const ONLY_SET = opt('set');
+const PREFIXES = (opt('prefix') ?? '').split(',').map((p) => p.trim()).filter(Boolean);
 const LIMIT = Number(opt('limit') ?? '0') || 0;
 const DRY_RUN = flag('dry-run');
 const FORCE = flag('force');
@@ -75,11 +79,14 @@ async function pagedSelect<T>(build: (from: number, to: number) => PromiseLike<{
 type CardRow = { id: string; set_id: string; image_base_url: string | null };
 
 async function main() {
-  const cards = await pagedSelect<CardRow>((from, to) => {
-    let q = db.from('catalog_cards').select('id, set_id, image_base_url').order('id').range(from, to);
-    if (ONLY_SET) q = db.from('catalog_cards').select('id, set_id, image_base_url').eq('set_id', ONLY_SET).order('id').range(from, to);
-    return q;
+  const allCards = await pagedSelect<CardRow>((from, to) => {
+    const cols = 'id, set_id, image_base_url';
+    const base = db.from('catalog_cards').select(cols).order('id').range(from, to);
+    return ONLY_SET ? db.from('catalog_cards').select(cols).eq('set_id', ONLY_SET).order('id').range(from, to) : base;
   });
+  const cards = PREFIXES.length
+    ? allCards.filter((c) => PREFIXES.some((p) => c.set_id === p || c.set_id.startsWith(p)))
+    : allCards;
 
   const done = FORCE
     ? new Set<string>()

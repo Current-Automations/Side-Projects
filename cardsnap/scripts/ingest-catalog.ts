@@ -9,7 +9,10 @@
  * Image ingest (catalog_card_images + the catalog-images bucket + phash) is a
  * separate pass, added once the Storage bucket exists.
  *
- *   npm run catalog:ingest -- [--set sv03] [--limit 5] [--dry-run] [--force]
+ *   npm run catalog:ingest -- [--all | --prefix sv,swsh | --set sv03] [--limit 5] [--dry-run] [--force]
+ *
+ * Default scope is the Scarlet & Violet era (--prefix sv). --all ingests every
+ * set TCGdex knows about; --prefix takes a comma list of set-id prefixes.
  *
  * Source: the public TCGdex API by default; set CATALOG_TCGDEX_BASE to a
  * self-hosted instance for offline, rate-limit-free ingest.
@@ -33,6 +36,8 @@ const opt = (name: string): string | undefined => {
 };
 
 const ONLY_SET = opt('set');
+const ALL = flag('all');
+const PREFIXES = (opt('prefix') ?? V1_SET_PREFIX).split(',').map((p) => p.trim()).filter(Boolean);
 const LIMIT = Number(opt('limit') ?? '0') || 0;
 const DRY_RUN = flag('dry-run');
 const FORCE = flag('force');
@@ -127,14 +132,16 @@ async function ingestSet(setId: string): Promise<SetStats> {
   return stats;
 }
 
+/** Pokemon TCG Pocket (digital-only, no physical cards): set ids like A1 / A2a / B1 / P-A. */
+const isDigitalOnly = (id: string) => /^[AB]\d/.test(id) || id === 'P-A';
+
 async function resolveSetIds(): Promise<string[]> {
   if (ONLY_SET) return [ONLY_SET];
   const list = await fetchSetList();
   if (!list.success) throw new Error(list.error);
-  return list.data
-    .map((s) => s.id)
-    .filter((id) => id === V1_SET_PREFIX || id.startsWith(`${V1_SET_PREFIX}0`) || id.startsWith(`${V1_SET_PREFIX}1`) || id.startsWith(`${V1_SET_PREFIX}.`) || /^sv\d/.test(id))
-    .sort();
+  const ids = list.data.map((s) => s.id).filter((id) => !isDigitalOnly(id));
+  if (ALL) return ids.sort();
+  return ids.filter((id) => PREFIXES.some((p) => id === p || id.startsWith(p))).sort();
 }
 
 async function main() {
