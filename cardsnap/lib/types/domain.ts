@@ -103,10 +103,15 @@ export type PricingResult = z.infer<typeof PricingResultSchema>;
 // Scan result — full response returned by POST /api/scan
 // ---------------------------------------------------------------------------
 
+export const PriceTrendSchema = z.enum(['up', 'down', 'stable', 'new']);
+export type PriceTrend = z.infer<typeof PriceTrendSchema>;
+
 export const ScanResultSchema = z.object({
   scan_id: z.string().uuid(),
   card: CardIdentificationSchema,
-  pricing: PricingResultSchema,
+  /** null when pricing is unavailable (provider down, no results, etc.) */
+  pricing: PricingResultSchema.nullable(),
+  trend: PriceTrendSchema.nullable(),
   remaining_scans: z.number().int().min(0).nullable(),
   cache_hit: z.boolean(),
 });

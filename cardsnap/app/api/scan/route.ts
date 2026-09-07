@@ -26,6 +26,7 @@ import { checkScanAllowed, incrementScanCount, createScanLog } from '@/lib/db';
 import { ApiErrorCode } from '@/lib/types/api';
 import { ScanRequestSchema } from '@/lib/types/api';
 import type { ApiErrorCodeValue } from '@/lib/types/api';
+import { buildQuery, getPriceWithCache } from '@/lib/pricing';
 
 const MODEL_USED = 'gpt-4o';
 
@@ -100,7 +101,17 @@ export async function POST(request: Request): Promise<Response> {
     return errorResponse(matched.error, ApiErrorCode.DB_ERROR, 500);
   }
 
-  // 6. Log the scan. Persist only a hash of the image — never the raw screenshot.
+  // 6. Fetch pricing (cache-first, 4hr TTL). Non-fatal on failure.
+  const query = buildQuery(identification.data);
+  const priceResult = await getPriceWithCache(query, matched.data.fingerprint);
+  if (!priceResult.success) {
+    console.warn(`[scan] pricing unavailable: ${priceResult.error}`);
+  }
+  const pricing = priceResult.success ? priceResult.data.pricing : null;
+  const trend = priceResult.success ? priceResult.data.trend : null;
+  const pricingCacheHit = priceResult.success ? priceResult.data.cacheHit : false;
+
+  // 7. Log the scan. Persist only a hash of the image — never the raw screenshot.
   const imageHash = createHash('sha256').update(image).digest('hex');
   const logResult = await createScanLog({
     user_id: userId,
@@ -108,13 +119,14 @@ export async function POST(request: Request): Promise<Response> {
     ai_response: identification.data,
     model_used: MODEL_USED,
     card_id: matched.data.card?.id,
-    cache_hit: matched.data.cacheHit,
+    cache_hit: pricingCacheHit,
+    price_at_scan: pricing?.avg_sold_price,
   });
   if (!logResult.success) {
     return errorResponse(logResult.error, ApiErrorCode.DB_ERROR, 500);
   }
 
-  // 7. Return identity + match. Pricing arrives in Session 3.
+  // 8. Return identity + pricing.
   // remaining came from checkScanAllowed (pre-increment), so subtract this scan.
   const remainingScans =
     allowed.data.remaining === null ? null : Math.max(0, allowed.data.remaining - 1);
@@ -124,9 +136,10 @@ export async function POST(request: Request): Promise<Response> {
     data: {
       scan_id: logResult.data.id,
       card: identification.data,
-      match: matched.data,
+      pricing,
+      trend,
+      cache_hit: pricingCacheHit,
       remaining_scans: remainingScans,
-      prices: null,
     },
   });
 }
