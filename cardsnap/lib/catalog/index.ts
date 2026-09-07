@@ -30,6 +30,8 @@ export {
   type ImageFormat,
 } from './transform';
 
+export { dhash, hammingDistance } from './phash';
+
 export type {
   TcgdexCard,
   TcgdexSet,

@@ -1,0 +1,174 @@
+/**
+ * scripts/ingest-images.ts
+ *
+ * Phase 1.3b — download the upstream TCGdex card image for every catalog_cards
+ * row into the `catalog-images` Storage bucket and write a catalog_card_images
+ * row (source 'upstream', finish null, review_status 'approved') with a dHash.
+ *
+ * Reads catalog_cards, not TCGdex. Run ingest-catalog first. Idempotent: a card
+ * that already has an upstream image row is skipped unless --force.
+ *
+ *   npm run catalog:images -- [--set sv03] [--limit 20] [--dry-run] [--force]
+ */
+
+import { getServerClient } from '../lib/db/server-client';
+import { cardImageUrl, dhash } from '../lib/catalog';
+import sharp from 'sharp';
+
+const args = process.argv.slice(2);
+const flag = (n: string) => args.includes(`--${n}`);
+const opt = (n: string): string | undefined => {
+  const i = args.indexOf(`--${n}`);
+  return i >= 0 ? args[i + 1] : undefined;
+};
+
+const ONLY_SET = opt('set');
+const LIMIT = Number(opt('limit') ?? '0') || 0;
+const DRY_RUN = flag('dry-run');
+const FORCE = flag('force');
+const CONCURRENCY = 4;
+const BUCKET = 'catalog-images';
+const PAGE = 1000;
+const RETRY_DELAYS_MS = [500, 1500, 4000];
+
+const db = getServerClient();
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** GET with retry on network error and 5xx / 429. Returns the body or throws. */
+async function fetchImage(url: string): Promise<Buffer> {
+  let lastStatus = 0;
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    if (attempt > 0) await sleep(RETRY_DELAYS_MS[attempt - 1]);
+    try {
+      const res = await fetch(url);
+      if (res.ok) return Buffer.from(await res.arrayBuffer());
+      lastStatus = res.status;
+      if (res.status < 500 && res.status !== 429) throw new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      if (attempt === RETRY_DELAYS_MS.length) throw err;
+    }
+  }
+  throw new Error(`HTTP ${lastStatus} after ${RETRY_DELAYS_MS.length} retries`);
+}
+
+async function mapPool<T>(items: T[], size: number, fn: (item: T) => Promise<void>): Promise<void> {
+  let cursor = 0;
+  const worker = async () => {
+    while (cursor < items.length) await fn(items[cursor++]);
+  };
+  await Promise.all(Array.from({ length: Math.min(size, items.length) }, worker));
+}
+
+async function pagedSelect<T>(build: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>): Promise<T[]> {
+  const out: T[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await build(from, from + PAGE - 1);
+    if (error) throw new Error(error.message);
+    const rows = data ?? [];
+    out.push(...rows);
+    if (rows.length < PAGE) break;
+  }
+  return out;
+}
+
+type CardRow = { id: string; set_id: string; image_base_url: string | null };
+
+async function main() {
+  const cards = await pagedSelect<CardRow>((from, to) => {
+    let q = db.from('catalog_cards').select('id, set_id, image_base_url').order('id').range(from, to);
+    if (ONLY_SET) q = db.from('catalog_cards').select('id, set_id, image_base_url').eq('set_id', ONLY_SET).order('id').range(from, to);
+    return q;
+  });
+
+  const done = FORCE
+    ? new Set<string>()
+    : new Set(
+        (
+          await pagedSelect<{ catalog_card_id: string }>((from, to) =>
+            db
+              .from('catalog_card_images')
+              .select('catalog_card_id')
+              .eq('source', 'upstream')
+              .order('catalog_card_id')
+              .range(from, to)
+          )
+        ).map((r) => r.catalog_card_id)
+      );
+
+  const pending = cards.filter((c) => !done.has(c.id));
+  const todo = LIMIT ? pending.slice(0, LIMIT) : pending;
+
+  console.log(
+    `${DRY_RUN ? '[dry-run] ' : ''}${cards.length} cards, ${cards.length - pending.length} already imaged, ${todo.length} to fetch${LIMIT ? ` (--limit ${LIMIT})` : ''}`
+  );
+
+  let ok = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  await mapPool(todo, CONCURRENCY, async (card) => {
+    const url = cardImageUrl(card.image_base_url, 'high', 'jpg');
+    if (!url) {
+      skipped++;
+      return;
+    }
+    try {
+      const buf = await fetchImage(url);
+      const meta = await sharp(buf).metadata();
+      const phash = await dhash(buf);
+
+      if (DRY_RUN) {
+        ok++;
+        return;
+      }
+
+      const path = `upstream/${card.id}.jpg`;
+      const up = await db.storage
+        .from(BUCKET)
+        .upload(path, buf, { contentType: 'image/jpeg', upsert: true });
+      if (up.error) {
+        failed++;
+        console.warn(`  ! ${card.id}: storage ${up.error.message}`);
+        return;
+      }
+
+      if (FORCE) {
+        await db
+          .from('catalog_card_images')
+          .delete()
+          .eq('catalog_card_id', card.id)
+          .eq('source', 'upstream');
+      }
+
+      const ins = await db.from('catalog_card_images').insert({
+        catalog_card_id: card.id,
+        finish: null,
+        source: 'upstream',
+        storage_path: path,
+        width: meta.width ?? null,
+        height: meta.height ?? null,
+        phash,
+        review_status: 'approved',
+      });
+      if (ins.error) {
+        failed++;
+        console.warn(`  ! ${card.id}: insert ${ins.error.message}`);
+        return;
+      }
+      ok++;
+      if (ok % 200 === 0) console.log(`  ... ${ok} done`);
+    } catch (err) {
+      failed++;
+      console.warn(`  ! ${card.id}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  });
+
+  console.log(`\ndone: ${ok} imaged, ${skipped} no-image, ${failed} failed`);
+  if (failed > 0) process.exitCode = 1;
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

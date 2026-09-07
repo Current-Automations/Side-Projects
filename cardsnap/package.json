@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build:extension": "node extension/build.mjs",
-    "catalog:ingest": "node --import tsx --env-file-if-exists=.env.local scripts/ingest-catalog.ts"
+    "catalog:ingest": "node --import tsx --env-file-if-exists=.env.local scripts/ingest-catalog.ts",
+    "catalog:images": "node --import tsx --env-file-if-exists=.env.local scripts/ingest-images.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.1",
