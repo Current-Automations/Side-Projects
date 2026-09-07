@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Extension is a separate build target with its own tsconfig and esbuild bundler.
+    "extension/dist/**",
   ]),
 ]);
 

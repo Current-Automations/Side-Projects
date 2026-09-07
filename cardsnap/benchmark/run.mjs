@@ -13,7 +13,7 @@
  *   node benchmark/run.mjs [--model gpt-4o] [--limit N]
  */
 
-import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import OpenAI from 'openai';
@@ -58,7 +58,7 @@ const norm = (s) =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
-const FINISHES = ['normal', 'holo', 'reverse', 'first_edition', 'unlimited', 'promo'];
+// normFinish collapses free-text finish labels to: normal | holo | reverse | first_edition | unlimited | promo
 function normFinish(s) {
   const n = norm(s);
   if (!n) return '';
