@@ -8,10 +8,17 @@
  * Reads catalog_cards, not TCGdex. Run ingest-catalog first. Idempotent: a card
  * that already has an upstream image row is skipped unless --force.
  *
- *   npm run catalog:images -- [--prefix sv,swsh | --set sv03] [--limit 20] [--dry-run] [--force]
+ *   npm run catalog:images -- [--prefix sv,swsh | --set sv03] [--dex-range 1-151]
+ *                             [--max-width 600] [--limit 20] [--dry-run] [--force]
  *
- * --prefix takes a comma list of set-id prefixes (default: all cards in the DB).
- * Use it to scope image storage to an era while under the free Storage tier.
+ * --prefix    comma list of set-id prefixes (default: all cards in the DB).
+ * --dex-range lo-hi national dex filter, keeps a card only if any of its
+ *             dex_ids falls in the range. '1-151' is the Kanto (original 151)
+ *             vertical, the v1 identifier scope.
+ * --max-width downscale to this width (never upscale) before hashing and
+ *             upload. The modern-era images are 600x825, so --max-width 600
+ *             keeps the whole corpus dimensionally uniform and under the free
+ *             Storage tier.
  */
 
 import { getServerClient } from '../lib/db/server-client';
@@ -27,6 +34,8 @@ const opt = (n: string): string | undefined => {
 
 const ONLY_SET = opt('set');
 const PREFIXES = (opt('prefix') ?? '').split(',').map((p) => p.trim()).filter(Boolean);
+const [DEX_LO, DEX_HI] = (opt('dex-range') ?? '').split('-').map((n) => Number(n) || 0);
+const MAX_WIDTH = Number(opt('max-width') ?? '0') || 0;
 const LIMIT = Number(opt('limit') ?? '0') || 0;
 const DRY_RUN = flag('dry-run');
 const FORCE = flag('force');
@@ -76,17 +85,20 @@ async function pagedSelect<T>(build: (from: number, to: number) => PromiseLike<{
   return out;
 }
 
-type CardRow = { id: string; set_id: string; image_base_url: string | null };
+type CardRow = { id: string; set_id: string; image_base_url: string | null; dex_ids: number[] | null };
 
 async function main() {
   const allCards = await pagedSelect<CardRow>((from, to) => {
-    const cols = 'id, set_id, image_base_url';
+    const cols = 'id, set_id, image_base_url, dex_ids';
     const base = db.from('catalog_cards').select(cols).order('id').range(from, to);
     return ONLY_SET ? db.from('catalog_cards').select(cols).eq('set_id', ONLY_SET).order('id').range(from, to) : base;
   });
-  const cards = PREFIXES.length
+  const byPrefix = PREFIXES.length
     ? allCards.filter((c) => PREFIXES.some((p) => c.set_id === p || c.set_id.startsWith(p)))
     : allCards;
+  const cards = DEX_HI
+    ? byPrefix.filter((c) => Array.isArray(c.dex_ids) && c.dex_ids.some((n) => n >= DEX_LO && n <= DEX_HI))
+    : byPrefix;
 
   const done = FORCE
     ? new Set<string>()
@@ -121,7 +133,13 @@ async function main() {
       return;
     }
     try {
-      const buf = await fetchImage(url);
+      let buf = await fetchImage(url);
+      if (MAX_WIDTH) {
+        buf = await sharp(buf)
+          .resize({ width: MAX_WIDTH, withoutEnlargement: true })
+          .jpeg({ quality: 82 })
+          .toBuffer();
+      }
       const meta = await sharp(buf).metadata();
       const phash = await dhash(buf);
 
@@ -159,6 +177,12 @@ async function main() {
         review_status: 'approved',
       });
       if (ins.error) {
+        // 23505 = the one-upstream-per-card unique index (migration 003). Another
+        // run already wrote this card; the upload was an idempotent overwrite.
+        if (ins.error.code === '23505') {
+          skipped++;
+          return;
+        }
         failed++;
         console.warn(`  ! ${card.id}: insert ${ins.error.message}`);
         return;
