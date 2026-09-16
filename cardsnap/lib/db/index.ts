@@ -7,9 +7,6 @@
  *   import { createScanLog, checkScanAllowed, getActiveTrainingRun } from '@/lib/db'
  */
 
-// ─── Cards ────────────────────────────────────────────────────────────────────
-export { findCard, getCardById, insertCard } from './cards'
-
 // ─── Price cache ──────────────────────────────────────────────────────────────
 export { generateFingerprint, getCachedPrice, setCachedPrice, getPreviousAvgPrice } from './price-cache'
 
@@ -58,14 +55,12 @@ export type { InsertTrainingExampleInput, PruneResult } from '../types/db'
 // ─── Raw DB row types (for internal helpers and tests) ───────────────────────
 export type {
   Database,
-  CardRow,      CardInsert,         CardUpdate,
   PriceCacheRow, PriceCacheInsert,  PriceCacheUpdate,
   ScanLogRow,   ScanLogInsert,      ScanLogUpdate,
   UserRow,      UserInsert,         UserUpdate,
   CorrectionRow, CorrectionInsert,  CorrectionUpdate,
   TrainingExampleRow, TrainingExampleInsert, TrainingExampleUpdate,
   TrainingRunRow,     TrainingRunInsert,     TrainingRunUpdate,
-  SportValue,
   GradeCompanyValue,
   PlanTierValue,
   TrainingSourceValue,

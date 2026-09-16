@@ -1,13 +1,15 @@
 /**
  * app/api/card/[id]/prices/route.ts
  *
- * GET /api/card/[id]/prices — price refresh for a known card.
+ * GET /api/card/[id]/prices — price refresh for a known catalog card.
  *
- * Looks up the card by ID, delegates to getPriceWithCache (cache-first, 4hr TTL),
- * and returns the pricing result. No auth required — prices are public data.
+ * Looks up the card by catalog_cards id, delegates to getPriceWithCache
+ * (cache-first, 4hr TTL), and returns the pricing result. No auth required —
+ * prices are public data.
  */
 
-import { getCardById, generateFingerprint } from '@/lib/db';
+import { getCatalogCardById } from '@/lib/catalog';
+import { generateFingerprint } from '@/lib/db';
 import { buildQuery, getPriceWithCache } from '@/lib/pricing';
 import { ApiErrorCode } from '@/lib/types/api';
 import type { ApiErrorCodeValue } from '@/lib/types/api';
@@ -23,33 +25,31 @@ export async function GET(
 ): Promise<Response> {
   const { id } = await params;
 
-  const cardResult = await getCardById(id);
-  if (!cardResult.success) {
-    // Supabase returns an error when .single() finds no row
+  const cardResult = await getCatalogCardById(id);
+  if (!cardResult.success || !cardResult.data) {
     return errorResponse('NOT_FOUND', ApiErrorCode.NOT_FOUND, 404);
   }
 
   const card = cardResult.data;
 
   const fingerprint = generateFingerprint({
-    player_name: card.player_name,
-    year: card.year,
-    manufacturer: card.manufacturer,
-    set_name: card.set_name,
-    parallel: card.parallel,
+    card_name: card.name,
+    set_id: card.set_id,
+    card_number: card.local_id,
+    finish: 'normal',
   });
 
-  // buildQuery expects CardIdentification — map card row fields to that shape
+  // buildQuery expects CardIdentification — map catalog row fields to that shape.
+  // finish defaults to 'normal': catalog_cards is one row per collector number,
+  // not per finish, so this endpoint has no finish to pass without a caller-supplied one.
   const query = buildQuery({
-    sport: card.sport as Parameters<typeof buildQuery>[0]['sport'],
-    player_name: card.player_name,
-    year: card.year,
-    manufacturer: card.manufacturer as Parameters<typeof buildQuery>[0]['manufacturer'],
-    product_line: card.set_name,
-    parallel_name: card.parallel || 'Base',
+    card_name: card.name,
+    set_name: undefined,
+    card_number: card.local_id,
+    finish: 'normal',
     is_graded: false,
     confidence: 1,
-    parallel_confidence: 1,
+    finish_confidence: 1,
     needs_confirmation: false,
   });
 

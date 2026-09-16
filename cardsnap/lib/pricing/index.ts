@@ -11,11 +11,18 @@
  * Graceful degradation: pricing failures return { success: false } — callers
  * should still return the card identification rather than failing the scan.
  *
- * Provider selection: switch getActiveProvider() here once eBay Marketplace
- * Insights access is approved (swap ebayBrowseProvider → ebayInsightsProvider).
+ * Provider chain (2026-09-14 comping decision): try tcgapi.net's sold comps
+ * first, then pokemonpricetracker.com (also has graded PSA values), and fall
+ * back to eBay Browse asking prices only if both fail. The first two are
+ * currently stubs (see their file headers) — until wired up, this chain
+ * always falls through to ebay-browse, which itself throws AUTH_FAILED
+ * without EBAY_APP_ID (intentionally unset). Pricing failure is non-fatal:
+ * getPriceWithCache's caller returns pricing: null and keeps going.
  */
 
 import { getCachedPrice, setCachedPrice, getPreviousAvgPrice } from '@/lib/db';
+import { tcgapiCompsProvider } from './tcgapi-comps';
+import { pokemonPriceTrackerProvider } from './pokemonpricetracker';
 import { ebayBrowseProvider } from './ebay-browse';
 import { PricingError } from '@/lib/types/pricing';
 import type { PricingProvider } from './provider';
@@ -33,8 +40,26 @@ export interface PriceWithCacheResult {
   trend: PriceTrend;
 }
 
-function getActiveProvider(): PricingProvider {
-  return ebayBrowseProvider;
+const PROVIDER_CHAIN: PricingProvider[] = [
+  tcgapiCompsProvider,
+  pokemonPriceTrackerProvider,
+  ebayBrowseProvider,
+];
+
+/** Tries each provider in PROVIDER_CHAIN, returning the first success. Throws the last error if all fail. */
+async function searchWithFallback(query: string): Promise<PricingResult> {
+  let lastErr: unknown;
+  for (const provider of PROVIDER_CHAIN) {
+    try {
+      return await provider.searchSoldListings(query);
+    } catch (err) {
+      lastErr = err;
+      console.warn(
+        `[pricing] provider ${provider.source} failed: ${err instanceof Error ? err.message : err}`
+      );
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error('All pricing providers failed');
 }
 
 function computeTrend(current: number, previous: number | null): PriceTrend {
@@ -56,7 +81,9 @@ function priceCacheToResult(row: PriceCache): PricingResult {
     })),
     sample_size: (row.last_10_sales ?? []).length,
     fetched_at: row.fetched_at,
-    attribution: 'Prices from eBay',
+    // price_cache doesn't record which provider produced the row, so this is
+    // deliberately provider-neutral rather than falsely naming one.
+    attribution: 'Prices from cached comp data',
   };
 }
 
@@ -92,9 +119,8 @@ export async function getPriceWithCache(
     const prevResult = await getPreviousAvgPrice(fingerprint);
     const previousAvg = prevResult.success ? prevResult.data : null;
 
-    // 3. Fetch from provider.
-    const provider = getActiveProvider();
-    const pricing = await provider.searchSoldListings(query);
+    // 3. Fetch from the provider chain.
+    const pricing = await searchWithFallback(query);
 
     // 4. Write to cache. Domain Sale has no currency; db Sale requires it — default USD.
     const dbSales = pricing.last_10_sales.map((s) => ({

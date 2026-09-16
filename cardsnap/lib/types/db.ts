@@ -18,25 +18,8 @@ export type DbResult<T> =
   | { success: true; data: T }
   | { success: false; error: string }
 
-// ─────────────────────────────────────────────
-// CARDS (DB row)
-// ─────────────────────────────────────────────
-
-export const CardSchema = z.object({
-  id:           z.string().uuid(),
-  player_name:  z.string().min(1),
-  year:         z.number().int().min(1900).max(2200),
-  manufacturer: z.string().min(1),
-  set_name:     z.string().min(1),
-  parallel:     z.string().default('Base'),
-  card_number:  z.string().nullable(),
-  sport:        z.enum(['NFL', 'NBA', 'MLB', 'NHL']),
-  created_at:   z.string(),
-})
-export type Card = z.infer<typeof CardSchema>
-
-export const InsertCardSchema = CardSchema.omit({ id: true, created_at: true })
-export type InsertCard = z.infer<typeof InsertCardSchema>
+// catalog_cards / catalog_sets row types live in lib/catalog/transform.ts
+// (CatalogCardRow / CatalogSetRow) — that module owns the TCGdex-sourced shape.
 
 // ─────────────────────────────────────────────
 // PRICE CACHE (DB row)
@@ -94,11 +77,11 @@ export const SCAN_LIMITS = {
 export const ScanLogSchema = z.object({
   id:                z.string().uuid(),
   user_id:           z.string().uuid(),
-  card_id:           z.string().uuid().nullable(),
+  card_id:           z.string().nullable(), // catalog_cards.id, e.g. 'sv03-125' — not a uuid
   image_hash:        z.string(),
   ai_response:       z.unknown(),
   model_used:        z.string().nullable(),
-  final_card_id:     z.string().uuid().nullable(),
+  final_card_id:     z.string().nullable(), // catalog_cards.id
   was_corrected:     z.boolean(),
   correction_source: z.string().nullable(),
   price_at_scan:     z.number().nullable(),
@@ -109,11 +92,11 @@ export type ScanLog = z.infer<typeof ScanLogSchema>
 
 export const InsertScanLogSchema = z.object({
   user_id:       z.string().uuid(),
-  card_id:       z.string().uuid().optional(),
+  card_id:       z.string().optional(), // catalog_cards.id, e.g. 'sv03-125' — not a uuid
   image_hash:    z.string().min(1),
   ai_response:   z.unknown().optional(),
   model_used:    z.string().optional(),
-  final_card_id: z.string().uuid().optional(),
+  final_card_id: z.string().optional(), // catalog_cards.id
   price_at_scan: z.number().optional(),
   cache_hit:     z.boolean().optional(),
 })

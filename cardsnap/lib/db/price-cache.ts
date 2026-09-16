@@ -1,7 +1,7 @@
 /**
  * lib/db/price-cache.ts
  *
- * eBay price cache — 4-hour TTL.
+ * Card pricing cache — 4-hour TTL.
  * generateFingerprint() is deterministic: same card + grade → same hash.
  */
 import { createHash } from 'crypto'
@@ -11,20 +11,18 @@ import type { PriceCache, Sale, DbResult } from '../types/db'
 const CACHE_TTL_MS = 4 * 60 * 60 * 1000 // 4 hours
 
 export function generateFingerprint(params: {
-  player_name:   string
-  year:          number
-  manufacturer:  string
-  set_name:      string
-  parallel:      string
+  card_name:      string
+  set_id?:        string | null
+  card_number?:   string | null
+  finish:         string
   grade_company?: string | null
   grade_value?:   string | null
 }): string {
   const raw = [
-    params.player_name.toLowerCase().trim(),
-    String(params.year),
-    params.manufacturer.toLowerCase().trim(),
-    params.set_name.toLowerCase().trim(),
-    params.parallel.toLowerCase().trim(),
+    params.card_name.toLowerCase().trim(),
+    (params.set_id ?? '').toLowerCase().trim(),
+    (params.card_number ?? '').toLowerCase().trim(),
+    params.finish.toLowerCase().trim(),
     params.grade_company ?? '',
     params.grade_value ?? '',
   ].join('|')

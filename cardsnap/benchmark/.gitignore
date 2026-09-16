@@ -1,0 +1,13 @@
+_raw/
+results/*.json
+
+# stream screenshots and labels stay local (third-party streams); regenerable work files
+_work/
+frames/
+labels.json
+review.html
+two-stage/all-*.html
+two-stage/labels.backup-*.json
+two-stage/picks-*.json
+two-stage/tcgdex_*.json
+__pycache__/

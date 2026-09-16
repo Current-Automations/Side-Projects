@@ -19,8 +19,7 @@ export {
   type CardIdentification,
 } from './domain';
 export {
-  SportSchema,
-  ManufacturerSchema,
+  FinishSchema,
   GradeCompanySchema,
   CONFIDENCE_THRESHOLDS,
 } from './domain';

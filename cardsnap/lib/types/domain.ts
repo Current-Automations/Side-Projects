@@ -12,14 +12,14 @@ import { z } from 'zod';
 // Scalar enums
 // ---------------------------------------------------------------------------
 
-export const SportSchema = z.enum(['NFL', 'NBA', 'MLB', 'NHL']);
-
-export const ManufacturerSchema = z.enum([
-  'Panini',
-  'Topps',
-  'Upper Deck',
-  'Leaf',
-  'Donruss',
+/** Matches TCGdex `variants` flags (lib/catalog/transform.ts possibleFinishes). */
+export const FinishSchema = z.enum([
+  'normal',
+  'holo',
+  'reverse',
+  'first_edition',
+  'unlimited',
+  'promo',
 ]);
 
 export const GradeCompanySchema = z.enum(['PSA', 'BGS', 'SGC', 'CGC']);
@@ -32,27 +32,22 @@ export const GradeCompanySchema = z.enum(['PSA', 'BGS', 'SGC', 'CGC']);
 // a plain object schema, so CorrectionSchema below derives from this, while the
 // refined CardIdentificationSchema is the one used to validate full AI output.
 export const CardIdentificationObject = z.object({
-  sport: SportSchema,
-  player_name: z.string().min(1),
-  year: z.number().int().min(1980).max(2030),
-  manufacturer: ManufacturerSchema,
-  product_line: z.string().min(1),
-  set_variant: z.string().optional(),
+  card_name: z.string().min(1),
+  /** TCGdex set id, e.g. "sv03" — the model rarely knows this outright; usually filled in later by match.ts. */
+  set_id: z.string().optional(),
+  /** Best-effort set name read off the card/packaging, e.g. "Obsidian Flames". */
+  set_name: z.string().optional(),
+  /** Printed collector number (TCGdex local_id), e.g. "125" or "125/197". */
   card_number: z.string().optional(),
-  parallel_name: z.string().default('Base'),
-  serial_number: z
-    .string()
-    .regex(/^(\d+\/\d+|\/\d+)$/)
-    .optional(),
+  finish: FinishSchema,
   is_graded: z.boolean(),
   grade_company: GradeCompanySchema.optional(),
   grade_value: z
     .string()
     .regex(/^\d+(\.\d)?$/)
     .optional(),
-  bgs_black_label: z.boolean().optional(),
   confidence: z.number().min(0).max(1),
-  parallel_confidence: z.number().min(0).max(1),
+  finish_confidence: z.number().min(0).max(1),
   needs_confirmation: z.boolean().default(false),
   error: z.string().optional(),
 });
@@ -71,12 +66,12 @@ export type CardIdentification = z.infer<typeof CardIdentificationSchema>;
 
 export const CONFIDENCE_THRESHOLDS = {
   OVERALL_MIN: 0.5,
-  PARALLEL_MIN: 0.6,
+  FINISH_MIN: 0.6,
   HIGH_CONFIDENCE: 0.85,
 } satisfies Record<string, number>;
 
 // ---------------------------------------------------------------------------
-// Pricing result — eBay sold listings summary
+// Pricing result — comp summary from whichever provider answered
 // ---------------------------------------------------------------------------
 
 export const PricingResultSchema = z.object({
@@ -94,7 +89,8 @@ export const PricingResultSchema = z.object({
     .max(10),
   sample_size: z.number().int().min(0),
   fetched_at: z.string(),
-  attribution: z.literal('Prices from eBay'),
+  /** Free-form per-provider credit line, e.g. "Prices from tcgapi.net (eBay sold comps)". */
+  attribution: z.string().min(1),
 });
 
 export type PricingResult = z.infer<typeof PricingResultSchema>;
@@ -125,10 +121,8 @@ export type ScanResult = z.infer<typeof ScanResultSchema>;
 export const CorrectionSchema = z.object({
   scan_id: z.string().uuid(),
   corrected_card: CardIdentificationObject.partial().required({
-    player_name: true,
-    year: true,
-    manufacturer: true,
-    product_line: true,
+    card_name: true,
+    finish: true,
   }),
 });
 

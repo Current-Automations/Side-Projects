@@ -73,21 +73,16 @@ export async function POST(request: Request): Promise<Response> {
   // 3. Build a complete CardIdentification from the partial correction.
   // Fill required fields from the schema defaults where omitted.
   const correctedCard = {
-    sport: corrected_card.sport ?? 'NFL',
-    player_name: corrected_card.player_name,
-    year: corrected_card.year,
-    manufacturer: corrected_card.manufacturer,
-    product_line: corrected_card.product_line,
-    set_variant: corrected_card.set_variant,
+    card_name: corrected_card.card_name,
+    set_id: corrected_card.set_id,
+    set_name: corrected_card.set_name,
     card_number: corrected_card.card_number,
-    parallel_name: corrected_card.parallel_name ?? 'Base',
-    serial_number: corrected_card.serial_number,
+    finish: corrected_card.finish,
     is_graded: corrected_card.is_graded ?? false,
     grade_company: corrected_card.grade_company,
     grade_value: corrected_card.grade_value,
-    bgs_black_label: corrected_card.bgs_black_label,
     confidence: 1,
-    parallel_confidence: 1,
+    finish_confidence: 1,
     needs_confirmation: false,
   } as const;
 
@@ -105,11 +100,10 @@ export async function POST(request: Request): Promise<Response> {
 
   // 5. Re-fetch pricing for the corrected card.
   const fingerprint = generateFingerprint({
-    player_name: correctedCard.player_name,
-    year: correctedCard.year,
-    manufacturer: correctedCard.manufacturer,
-    set_name: correctedCard.product_line,
-    parallel: correctedCard.parallel_name,
+    card_name: correctedCard.card_name,
+    set_id: correctedCard.set_id ?? null,
+    card_number: correctedCard.card_number ?? null,
+    finish: correctedCard.finish,
     grade_company: correctedCard.grade_company ?? null,
     grade_value: correctedCard.grade_value ?? null,
   });

@@ -7,32 +7,25 @@ import {
 import { CONFIDENCE_THRESHOLDS } from '@/lib/types/domain';
 
 const completeCard = {
-  sport: 'NBA',
-  player_name: 'LeBron James',
-  year: 2003,
-  manufacturer: 'Upper Deck',
-  product_line: 'SP Authentic',
-  set_variant: 'Rookie Exclusives',
-  card_number: '123',
-  parallel_name: 'Gold',
-  serial_number: '/25',
+  card_name: 'Charizard',
+  set_id: 'sv03',
+  set_name: 'Obsidian Flames',
+  card_number: '125',
+  finish: 'holo',
   is_graded: true,
   grade_company: 'PSA',
   grade_value: '10',
   confidence: 0.95,
-  parallel_confidence: 0.9,
+  finish_confidence: 0.9,
   needs_confirmation: false,
 };
 
 const minimalCard = {
-  sport: 'NFL',
-  player_name: 'Patrick Mahomes',
-  year: 2017,
-  manufacturer: 'Panini',
-  product_line: 'Prizm',
+  card_name: 'Pikachu',
+  finish: 'normal',
   is_graded: false,
   confidence: 0.8,
-  parallel_confidence: 0.7,
+  finish_confidence: 0.7,
 };
 
 describe('validateIdentification', () => {
@@ -40,8 +33,8 @@ describe('validateIdentification', () => {
     const result = validateIdentification(completeCard);
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.player_name).toBe('LeBron James');
-      expect(result.data.serial_number).toBe('/25');
+      expect(result.data.card_name).toBe('Charizard');
+      expect(result.data.finish).toBe('holo');
       expect(result.data.grade_company).toBe('PSA');
     }
   });
@@ -50,8 +43,8 @@ describe('validateIdentification', () => {
     const result = validateIdentification(minimalCard);
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.parallel_name).toBe('Base');
       expect(result.data.needs_confirmation).toBe(false);
+      expect(result.data.set_id).toBeUndefined();
       expect(result.data.card_number).toBeUndefined();
       expect(result.data.grade_company).toBeUndefined();
     }
@@ -79,7 +72,7 @@ describe('parseIdentificationJson', () => {
     const result = parseIdentificationJson(JSON.stringify(completeCard));
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.player_name).toBe('LeBron James');
+      expect(result.data.card_name).toBe('Charizard');
     }
   });
 
@@ -101,7 +94,7 @@ describe('parseIdentificationJson', () => {
   });
 
   it('returns VALIDATION_ERROR when JSON parses but fails the schema', () => {
-    const result = parseIdentificationJson('{"player_name":"Mystery"}');
+    const result = parseIdentificationJson('{"card_name":"Mystery"}');
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.code).toBe('VALIDATION_ERROR');

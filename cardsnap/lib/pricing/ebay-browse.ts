@@ -2,11 +2,12 @@
  * lib/pricing/ebay-browse.ts
  *
  * PricingProvider backed by the eBay Browse API (item_summary/search).
- *
- * IMPORTANT: The Browse API returns ACTIVE listings (current asking prices),
- * NOT completed/sold comps. This is an intentional stopgap — the Marketplace
- * Insights API (true sold data) requires eBay approval and is stubbed in
- * ebay-insights.ts. Swap providers in lib/pricing/index.ts once approved.
+ * Last-resort fallback (see getActiveProvider() in index.ts) — the
+ * 2026-09-14 comping decision put tcgapi.net/pokemonpricetracker.com first
+ * since they return real sold comps; Browse only returns ACTIVE listings
+ * (current asking prices). EBAY_APP_ID/EBAY_CERT_ID are intentionally left
+ * unset (eBay business approval isn't being pursued), so this throws
+ * AUTH_FAILED until/unless that changes.
  *
  * OAuth: client-credentials grant (Application token). The token is cached
  * in-module and refreshed 60 seconds before expiry.
@@ -25,7 +26,6 @@ import type { CardIdentification } from '@/lib/types/identification';
 
 const EBAY_AUTH_URL = 'https://api.ebay.com/identity/v1/oauth2/token';
 const EBAY_BROWSE_URL = 'https://api.ebay.com/buy/browse/v1/item_summary/search';
-const SPORTS_CARD_CATEGORY = '212';
 const TOKEN_REFRESH_BUFFER_MS = 60_000;
 
 // ─── In-module token cache ────────────────────────────────────────────────────
@@ -73,19 +73,21 @@ async function getAccessToken(): Promise<string> {
 // ─── Query builder ────────────────────────────────────────────────────────────
 
 /**
- * Builds a Browse API search query for a card identification.
- * - Serial number intentionally excluded — too specific, returns zero results.
+ * Builds a search query for a Pokemon card identification. Shared across
+ * providers (not just eBay Browse) since they all take a free-text query.
+ * - Card number intentionally excluded from the quoted terms — sellers list
+ *   it inconsistently (with/without set total), too specific, returns zero results.
  * - Grade appended when is_graded=true so results skew toward graded comps.
  */
 export function buildQuery(card: CardIdentification): string {
-  const parts: string[] = [
-    `"${card.player_name}"`,
-    `"${card.year}"`,
-    `"${card.product_line}"`,
-  ];
+  const parts: string[] = [`"${card.card_name}"`];
 
-  if (card.parallel_name && card.parallel_name !== 'Base') {
-    parts.push(`"${card.parallel_name}"`);
+  if (card.set_name) {
+    parts.push(`"${card.set_name}"`);
+  }
+
+  if (card.finish && card.finish !== 'normal') {
+    parts.push(card.finish.replace('_', ' '));
   }
 
   if (card.is_graded && card.grade_company) {
@@ -93,7 +95,7 @@ export function buildQuery(card: CardIdentification): string {
     parts.push(`"${grade}"`);
   }
 
-  parts.push('card');
+  parts.push('pokemon card');
 
   return parts.join(' ');
 }
@@ -108,7 +110,6 @@ export const ebayBrowseProvider: PricingProvider = {
 
     const url = new URL(EBAY_BROWSE_URL);
     url.searchParams.set('q', query);
-    url.searchParams.set('category_ids', SPORTS_CARD_CATEGORY);
     url.searchParams.set('limit', '10');
     url.searchParams.set('sort', '-itemEndDate');
 
@@ -160,7 +161,7 @@ export const ebayBrowseProvider: PricingProvider = {
       last_10_sales: sales,
       sample_size: items.length,
       fetched_at: new Date().toISOString(),
-      attribution: 'Prices from eBay',
+      attribution: 'Prices from eBay (active listings, not sold comps)',
     };
   },
 };

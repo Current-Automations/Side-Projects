@@ -4,12 +4,10 @@
  * Deep module: callers import from here only, never from TCGdex or Supabase
  * directly (mirrors lib/pricing, lib/ai, lib/db).
  *
- * Two halves:
- *  - source + transform (this commit): fetch TCGdex records and map them onto
- *    the migration 002 row shapes. Used by scripts/ingest-catalog.ts.
- *  - store-backed queries (getCard / findCardsByNumber / searchCards / listSets):
- *    land with the ingest wiring, once a live Supabase project exists. They read
- *    catalog_cards, not TCGdex.
+ * Three parts:
+ *  - source + transform: fetch TCGdex records and map them onto the migration
+ *    002 row shapes. Used by scripts/ingest-catalog.ts.
+ *  - store (lib/ai/match.ts's catalog lookup): reads catalog_cards, not TCGdex.
  */
 
 export {
@@ -29,6 +27,12 @@ export {
   type ImageQuality,
   type ImageFormat,
 } from './transform';
+
+export {
+  findCatalogCard,
+  getCatalogCardById,
+  type CatalogDbResult,
+} from './store';
 
 export { dhash, hammingDistance } from './phash';
 

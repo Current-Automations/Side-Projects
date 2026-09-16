@@ -29,30 +29,25 @@ export type IdentifyResult =
   | { success: true; data: CardIdentification }
   | { success: false; error: string; code: IdentifyErrorCode; raw?: unknown };
 
-const SYSTEM_PROMPT = `You are a sports card identification expert with encyclopedic knowledge of NFL, NBA, MLB, and NHL trading cards from 1980 to present. You can identify cards from partial images and distinguish parallels, variations, and serial-numbered editions. You always return valid JSON and never guess — if uncertain, lower the confidence score.`;
+const SYSTEM_PROMPT = `You are a Pokemon TCG identification expert with encyclopedic knowledge of every English and Japanese Pokemon card set, from the original Base Set through the current Scarlet & Violet era. You can identify cards from partial or angled images (including cards held up on a live-stream camera) and distinguish finishes (normal, holo, reverse holo, first edition, unlimited, promo) and graded slabs. You always return valid JSON and never guess — if uncertain, lower the confidence score.`;
 
 const FIELD_SPEC = `Return a JSON object with these exact fields:
-- sport: one of "NFL", "NBA", "MLB", "NHL"
-- player_name: string
-- year: number between 1980 and 2030
-- manufacturer: one of "Panini", "Topps", "Upper Deck", "Leaf", "Donruss"
-- product_line: string (the product/set line, e.g. "Prizm", "Select", "SP Authentic")
-- set_variant: string, optional (a sub-set or insert name)
-- card_number: string, optional
-- parallel_name: string (the parallel/variation name; use "Base" if it is not a parallel)
-- serial_number: string, optional (format "/25" or "1/1")
-- is_graded: boolean
+- card_name: string (the Pokemon or trainer/energy card name, e.g. "Charizard ex")
+- set_id: string, optional (the TCGdex set id if you recognize the set symbol, e.g. "sv03")
+- set_name: string, optional (the set name if legible or recognizable, e.g. "Obsidian Flames")
+- card_number: string, optional (the printed collector number, e.g. "125" or "125/197")
+- finish: one of "normal", "holo", "reverse", "first_edition", "unlimited", "promo"
+- is_graded: boolean (true if the card is inside a graded slab, e.g. PSA/BGS/SGC/CGC)
 - grade_company: string, optional, one of "PSA", "BGS", "SGC", "CGC" (required when is_graded is true)
 - grade_value: string, optional (e.g. "9", "9.5", "10")
-- bgs_black_label: boolean, optional
-- confidence: number between 0 and 1 (overall confidence)
-- parallel_confidence: number between 0 and 1 (confidence specifically in the parallel/variation)
+- confidence: number between 0 and 1 (overall confidence in card_name)
+- finish_confidence: number between 0 and 1 (confidence specifically in the finish)
 
-If this is not a sports card or the image is too blurry to identify, return: {"error": "reason"}
+If this is not a Pokemon card or the image is too blurry to identify, return: {"error": "reason"}
 
 Return ONLY the JSON object. No explanation, no markdown, no backticks.`;
 
-const USER_PROMPT = `Analyze this sports card image. ${FIELD_SPEC}`;
+const USER_PROMPT = `Analyze this Pokemon card image. ${FIELD_SPEC}`;
 
 const RETRY_USER_PROMPT = `Your previous response could not be parsed as a valid card identification. Look at the image again carefully and respond strictly. ${FIELD_SPEC}`;
 
@@ -136,7 +131,7 @@ async function requestIdentification(
 }
 
 /**
- * Identify a sports card from an image.
+ * Identify a Pokemon card from an image.
  *
  * @param image base64 string (raw or data URI) or an http(s) image URL
  * @param options.model override the model — pass the active fine-tuned model id here

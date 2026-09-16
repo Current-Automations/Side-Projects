@@ -10,51 +10,13 @@
 // Scalar union types derived from CHECK constraints
 // ---------------------------------------------------------------------------
 
-export type SportValue = 'NFL' | 'NBA' | 'MLB' | 'NHL';
 export type GradeCompanyValue = 'PSA' | 'BGS' | 'SGC' | 'CGC';
 export type PlanTierValue = 'free' | 'basic' | 'pro' | 'streamer';
 export type TrainingSourceValue = 'user_correction' | 'confirmed' | 'bootstrap';
 export type TrainingStatusValue = 'pending' | 'running' | 'completed' | 'failed';
 
-// ---------------------------------------------------------------------------
-// cards
-// ---------------------------------------------------------------------------
-
-export interface CardRow {
-  id: string;
-  player_name: string;
-  year: number;
-  manufacturer: string;
-  set_name: string;
-  parallel: string;
-  card_number: string | null;
-  sport: SportValue;
-  created_at: string;
-}
-
-export interface CardInsert {
-  id?: string;
-  player_name: string;
-  year: number;
-  manufacturer: string;
-  set_name: string;
-  parallel?: string;
-  card_number?: string | null;
-  sport: SportValue;
-  created_at?: string;
-}
-
-export interface CardUpdate {
-  id?: string;
-  player_name?: string;
-  year?: number;
-  manufacturer?: string;
-  set_name?: string;
-  parallel?: string;
-  card_number?: string | null;
-  sport?: SportValue;
-  created_at?: string;
-}
+// catalog_cards / catalog_sets row types live in lib/catalog/transform.ts
+// (CatalogCardRow / CatalogSetRow) — that module owns the TCGdex-sourced shape.
 
 // ---------------------------------------------------------------------------
 // price_cache
@@ -270,11 +232,6 @@ export interface TrainingRunUpdate {
 export type Database = {
   public: {
     Tables: {
-      cards: {
-        Row: CardRow;
-        Insert: CardInsert;
-        Update: CardUpdate;
-      };
       price_cache: {
         Row: PriceCacheRow;
         Insert: PriceCacheInsert;

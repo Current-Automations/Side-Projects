@@ -3,16 +3,15 @@
  *
  * Maps a GPT-4o CardIdentification onto a catalog card. Checks the price cache
  * by fingerprint first (a hit means we already know this exact card and can
- * skip the catalog lookup), then falls back to a fuzzy match against the cards
- * table. Surfaces a needsConfirmation flag when the match is too weak to trust.
- *
- * Field-name bridge: the AI/domain shape uses product_line + parallel_name,
- * while the db helpers speak set_name + parallel. The mapping lives here.
+ * skip the catalog lookup), then falls back to a fuzzy match against
+ * catalog_cards. Surfaces a needsConfirmation flag when the match is too weak
+ * to trust.
  */
 
-import { findCard, generateFingerprint, getCachedPrice } from '@/lib/db';
+import { findCatalogCard } from '@/lib/catalog';
+import { generateFingerprint, getCachedPrice } from '@/lib/db';
 import type { CardIdentification } from '@/lib/types/identification';
-import type { Card } from '@/lib/types/db';
+import type { CatalogCardRow } from '@/lib/catalog';
 
 /** Below this match confidence, ask the user to confirm rather than trust the match. */
 const MATCH_CONFIRMATION_THRESHOLD = 0.6;
@@ -22,7 +21,7 @@ export interface CardMatch {
   fingerprint: string;
   cacheHit: boolean;
   /** Best catalog match, or null when nothing in the catalog matched. */
-  card: Card | null;
+  card: CatalogCardRow | null;
   matchConfidence: number;
   needsConfirmation: boolean;
 }
@@ -33,11 +32,10 @@ export type MatchResult =
 
 export async function match(identification: CardIdentification): Promise<MatchResult> {
   const fingerprint = generateFingerprint({
-    player_name: identification.player_name,
-    year: identification.year,
-    manufacturer: identification.manufacturer,
-    set_name: identification.product_line,
-    parallel: identification.parallel_name,
+    card_name: identification.card_name,
+    set_id: identification.set_id ?? null,
+    card_number: identification.card_number ?? null,
+    finish: identification.finish,
     grade_company: identification.grade_company ?? null,
     grade_value: identification.grade_value ?? null,
   });
@@ -63,12 +61,10 @@ export async function match(identification: CardIdentification): Promise<MatchRe
   console.log(`[match] cache MISS fingerprint=${fingerprint.slice(0, 12)}`);
 
   // 2. No cache — fuzzy match against the catalog.
-  const found = await findCard({
-    player_name: identification.player_name,
-    year: identification.year,
-    manufacturer: identification.manufacturer,
-    set_name: identification.product_line,
-    parallel: identification.parallel_name,
+  const found = await findCatalogCard({
+    card_name: identification.card_name,
+    set_id: identification.set_id,
+    card_number: identification.card_number,
   });
   if (!found.success) {
     return { success: false, error: `match (catalog lookup): ${found.error}` };

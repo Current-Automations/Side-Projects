@@ -19,22 +19,19 @@ import type { CardIdentification } from '@/lib/types/identification';
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
 const BASE_CARD: CardIdentification = {
-  sport: 'NFL',
-  player_name: 'Patrick Mahomes',
-  year: 2018,
-  manufacturer: 'Panini',
-  product_line: 'Prizm',
-  parallel_name: 'Base',
+  card_name: 'Charizard',
+  set_name: 'Obsidian Flames',
+  finish: 'normal',
   is_graded: false,
   confidence: 0.95,
-  parallel_confidence: 0.9,
+  finish_confidence: 0.9,
   needs_confirmation: false,
 };
 
-const PARALLEL_CARD: CardIdentification = {
+const HOLO_CARD: CardIdentification = {
   ...BASE_CARD,
-  parallel_name: 'Silver Prizm',
-  parallel_confidence: 0.85,
+  finish: 'holo',
+  finish_confidence: 0.85,
 };
 
 const GRADED_CARD: CardIdentification = {
@@ -50,30 +47,29 @@ const GRADED_NO_VALUE: CardIdentification = {
   grade_company: 'BGS',
 };
 
-const SERIAL_CARD: CardIdentification = {
+const CARD_NUMBER_CARD: CardIdentification = {
   ...BASE_CARD,
-  serial_number: '25/50',
+  card_number: '125/197',
 };
 
 // ─── buildQuery ───────────────────────────────────────────────────────────────
 
 describe('buildQuery', () => {
-  it('builds a basic query with player, year, product_line, and card suffix', () => {
+  it('builds a basic query with card_name, set_name, and card suffix', () => {
     const q = buildQuery(BASE_CARD);
-    expect(q).toContain('"Patrick Mahomes"');
-    expect(q).toContain('"2018"');
-    expect(q).toContain('"Prizm"');
-    expect(q).toMatch(/card$/);
+    expect(q).toContain('"Charizard"');
+    expect(q).toContain('"Obsidian Flames"');
+    expect(q).toMatch(/pokemon card$/);
   });
 
-  it('omits parallel when parallel_name is Base', () => {
+  it('omits finish when finish is normal', () => {
     const q = buildQuery(BASE_CARD);
-    expect(q).not.toContain('"Base"');
+    expect(q).not.toContain('normal');
   });
 
-  it('includes non-Base parallel in the query', () => {
-    const q = buildQuery(PARALLEL_CARD);
-    expect(q).toContain('"Silver Prizm"');
+  it('includes non-normal finish in the query', () => {
+    const q = buildQuery(HOLO_CARD);
+    expect(q).toContain('holo');
   });
 
   it('appends grade when card is graded with grade_value', () => {
@@ -87,10 +83,9 @@ describe('buildQuery', () => {
     expect(q).not.toContain('"BGS undefined"');
   });
 
-  it('never includes serial_number in the query (too specific)', () => {
-    const q = buildQuery(SERIAL_CARD);
-    expect(q).not.toContain('25/50');
-    expect(q).not.toContain('/50');
+  it('never includes card_number in the query (sellers list it inconsistently)', () => {
+    const q = buildQuery(CARD_NUMBER_CARD);
+    expect(q).not.toContain('125/197');
   });
 });
 
