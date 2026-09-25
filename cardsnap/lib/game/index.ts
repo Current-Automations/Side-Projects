@@ -92,7 +92,7 @@ export async function startRound(req: RoundRequest): Promise<DbResult<RoundQuest
       roundId: created.data,
       mode: built.mode,
       prompt: built.prompt,
-      imageUrl: imageUrl(built.imagePath),
+      imageUrl: imageUrl(built.imageBaseUrl),
       choices: built.choices,
     },
   };

@@ -74,3 +74,68 @@ c7 red Chinese card's identity entirely. No pack-break footage still.
 
 Raw dump/contact sheets stay local only (`benchmark/_raw/`, now gitignored) --
 only `benchmark/frames/` + `labels.json` are meant to be committed.
+
+## 2026-09-17 — `autotrim.py`: auto-cut raw recordings to card-visible spans
+
+New script, `benchmark/two-stage/autotrim.py`, plus a small refactor pulling the
+OWLv2 detector out of `detect_crop.py` into `benchmark/two-stage/card_detect.py`
+so both scripts share it. Point it at a raw OBS `.mp4`; it crops to the Whatnot
+player region, samples at 2fps, runs the same zero-shot card detector, and
+writes a manifest of card-visible spans (start/end/score) instead of a video
+to scrub by eye. `--sheet` writes a contact-sheet montage per span for a fast
+visual review; `--extract` writes frames from kept spans in the existing
+`c<clip>-<seq>.jpg` naming. Manifests and frames land in `_work/autotrim/`
+(gitignored, same as everything else touching third-party stream content).
+
+Also fixed while wiring this up: the installed `transformers` renamed
+`Owlv2Processor.post_process_object_detection` to
+`post_process_grounded_object_detection`. `detect_crop.py` was broken by this
+independent of anything here; both scripts now use the renamed method via
+`card_detect.py`.
+
+Ran against all 9 existing raw clips (the 7 from 2026-09-08, both from
+2026-09-16) as a smoke test before recording more sellers:
+
+- **The fixed crop (`crop=924:812:492:204`) holds on a 6th distinct seller**
+  ("immaculate", 2026-09-16), not just the ~5 from 2026-09-08.
+- **c1's ~4s OBS-setup opening gets dropped** (kept span starts at 3.0s), matching
+  the per-clip table above.
+- **c3's bag-unwrapping stretch gets dropped** — a real ~7.5s gap with nothing
+  scored as a card in it, matching "the seller unwrapping the slab bag with no
+  card visible" from the dropped-burst note above.
+- **c4's 44s Charizard rotation stays one span**, not fragmented.
+- **Found a false-positive mode**: at the default 0.15 score floor (same floor
+  `detect_crop.py` always used), c3 kept a spurious 3s span before the real
+  gap — it was the streamer's small facecam bubble matching "a trading card in
+  a plastic case" on aspect ratio, not an actual card, scored 0.17-0.19. Added
+  `--min-score` (default 0.15, unchanged); at `--min-score 0.25` the spurious
+  span disappears and only the genuine slab-hold span remains. Worth using
+  0.2-0.25 by default once run on real footage instead of the raw floor.
+- **c7's several held items (Rayquaza, stamped Charizard, Pikachu figure +
+  toploader) do not split into separate spans** — the clip stays ~99% one
+  continuous span. That's correct for a presence detector (something
+  card-shaped stayed in frame the whole time), it just means "did the held
+  item change" is not something auto-trim answers; that's still the
+  identifier's job downstream.
+- Overall on this corpus: 208s total, 193s kept (~93%). That's expected to be
+  a weak signal — this footage was already hand-culled around known card
+  holds, so of course most of it is a card. The real test is the first full
+  unedited hour-long recording, where the manual-cull step has never touched
+  it.
+
+Not done here: no fine-tuning, no multi-card handling, no `.mp4` clip cutting,
+no audio. All deferred per the 2026-09-17 grill session
+(`Atlas/Brainstorms/Projects/CardSnap/2026-09-17-cardsnap-footage-autotrim.md`
+in the vault).
+
+## 2026-09-25 — Recording other sellers' streams stopped
+
+Whatnot's terms bar "any manual process to monitor or copy any of the material
+on the App" without their written consent, and any automated use or scraping.
+So no more OBS recordings of other sellers, manual or automated, and the
+15-20 seller plan above is dropped. The 9 clips already on disk stay local and
+are used for testing only. New training footage is cards Jarrett owns, filmed
+by him on his phone in several lighting and background setups. YouTube and
+TikTok footage is out for the same reason (both terms bar downloading and
+scrapers). Grill notes: `Atlas/Brainstorms/Projects/CardSnap/2026-09-25-cardsnap-data-shops-investors.md`
+in the vault.

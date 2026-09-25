@@ -7,19 +7,20 @@
  * Callers import from lib/game, never from here.
  */
 import { getServerClient } from '../db/server-client';
+import { cardImageUrl } from '../catalog';
 import type { DbResult } from '../types/db';
 import type { ShopConfig, LeaderboardEntry } from './schemas';
-
-const BUCKET = 'catalog-images';
 
 function fail(err: unknown): { success: false; error: string } {
   return { success: false, error: err instanceof Error ? err.message : String(err) };
 }
 
-/** Public Storage URL for an approved catalog image. */
-export function imageUrl(storagePath: string): string {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-  return `${base}/storage/v1/object/public/${BUCKET}/${storagePath}`;
+/**
+ * Card image URL, served straight from TCGdex (assets.tcgdex.net) rather
+ * than re-hosted in Supabase Storage. See migration 006 for why.
+ */
+export function imageUrl(imageBaseUrl: string): string {
+  return cardImageUrl(imageBaseUrl, 'high', 'jpg') ?? '';
 }
 
 export async function getShop(slug: string): Promise<DbResult<ShopConfig>> {
@@ -74,13 +75,13 @@ export interface RawSetDraw {
   card_name: string;
   set_id: string;
   set_name: string;
-  image_path: string;
+  image_base_url: string;
   distractor_sets: string[];
 }
 
 export async function drawSetRound(
   dexLo = 1,
-  dexHi = 151
+  dexHi = 2000
 ): Promise<DbResult<RawSetDraw | null>> {
   try {
     const db = getServerClient();

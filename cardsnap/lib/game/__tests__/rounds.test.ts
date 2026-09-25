@@ -7,7 +7,7 @@ const draw: RawSetDraw = {
   card_name: 'Charizard',
   set_id: 'base1',
   set_name: 'Base Set',
-  image_path: 'upstream/base1-4.jpg',
+  image_base_url: 'https://assets.tcgdex.net/en/base/base1/4',
   distractor_sets: ['Jungle', 'Fossil', 'Team Rocket'],
 };
 
@@ -45,10 +45,10 @@ describe('buildSetRound', () => {
     expect(round.correct).toBe('Base Set');
   });
 
-  it('carries the card id and image path through for persistence', () => {
+  it('carries the card id and image base url through for persistence', () => {
     const round = buildSetRound(draw);
     expect(round.cardId).toBe('base1-4');
-    expect(round.imagePath).toBe('upstream/base1-4.jpg');
+    expect(round.imageBaseUrl).toBe('https://assets.tcgdex.net/en/base/base1/4');
     expect(round.mode).toBe('set');
   });
 });

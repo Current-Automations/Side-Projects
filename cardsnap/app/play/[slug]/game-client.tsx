@@ -72,6 +72,7 @@ export function GameClient({ slug }: { slug: string }) {
   const [board, setBoard] = useState<LeaderRow[]>([]);
   const [name, setName] = useState(() => readLocal(NAME_KEY));
   const askedAt = useRef<number>(0);
+  const skippedRoundId = useRef<string | null>(null);
   const [deviceId] = useState(() => (typeof window === 'undefined' ? '' : getDeviceId()));
 
   const accent = shop?.theme_color ?? '#0e7359';
@@ -122,6 +123,12 @@ export function GameClient({ slug }: { slug: string }) {
       setBusy(false);
     }
   }, [slug, deviceId]);
+
+  const handleImageError = useCallback(() => {
+    if (!question || phase !== 'question' || skippedRoundId.current === question.roundId) return;
+    skippedRoundId.current = question.roundId;
+    nextRound();
+  }, [question, phase, nextRound]);
 
   const answer = useCallback(
     async (choice: string) => {
@@ -253,6 +260,7 @@ export function GameClient({ slug }: { slug: string }) {
               src={question.imageUrl}
               alt="Pokémon card"
               className="mx-auto block max-h-[46vh] w-auto object-contain"
+              onError={handleImageError}
             />
           </div>
           <p className="mb-3 text-center font-medium">{question.prompt}</p>

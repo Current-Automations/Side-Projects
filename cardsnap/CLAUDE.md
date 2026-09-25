@@ -2,7 +2,9 @@
 
 # CardSnap — Claude Code Context
 
-## What this is
+> **Direction changed 2026-09-07, this file predates it.** CardSnap is now Pokémon-first: GPT-4o Vision is dropped for an in-house two-stage identifier (retrieval resolves the card, a separate classifier plus multi-frame specular analysis resolves the finish), TCGdex is the catalog, Scrydex the paid fallback, and the near-term goal is personal arbitrage comping (tcgapi.net + pokemonpricetracker.com), not a subscription extension. Plan of record: `~/.claude/plans/lets-plan-this-out-precious-tower.md` (Phase 0 done, `benchmark/two-stage/` is the live work). The Stack, Business rules, File structure and Session notes below describe the sports-card/GPT-4o build that Sessions 1-3 shipped and are kept only so that code still makes sense. Treat the plan, not this file, as current.
+
+## What this is (original, superseded)
 Sports card AI identification and pricing tool.
 Chrome extension + Next.js web app.
 Users watch live card breaks on Whatnot, TikTok, Instagram.

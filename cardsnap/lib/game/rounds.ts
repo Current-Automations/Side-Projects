@@ -48,7 +48,7 @@ export interface BuiltRound {
   cardId: string | null;
   mode: GameMode;
   prompt: string;
-  imagePath: string;
+  imageBaseUrl: string;
   choices: string[];
   correct: string;
 }
@@ -66,7 +66,7 @@ export function buildSetRound(draw: RawSetDraw): BuiltRound {
     cardId: draw.card_id,
     mode: 'set',
     prompt: 'Which set is this card from?',
-    imagePath: draw.image_path,
+    imageBaseUrl: draw.image_base_url,
     choices,
     correct: draw.set_name,
   };
