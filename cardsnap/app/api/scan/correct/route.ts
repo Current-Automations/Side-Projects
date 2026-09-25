@@ -109,7 +109,7 @@ export async function POST(request: Request): Promise<Response> {
   });
 
   const query = buildQuery(correctedCard);
-  const priceResult = await getPriceWithCache(query, fingerprint);
+  const priceResult = await getPriceWithCache(query, fingerprint, correctedCard);
   if (!priceResult.success) {
     console.warn(`[correct] pricing unavailable after correction: ${priceResult.error}`);
   }

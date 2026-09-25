@@ -13,10 +13,9 @@
  *
  * Provider chain (2026-09-14 comping decision): try tcgapi.net's sold comps
  * first, then pokemonpricetracker.com (also has graded PSA values), and fall
- * back to eBay Browse asking prices only if both fail. The first two are
- * currently stubs (see their file headers) — until wired up, this chain
- * always falls through to ebay-browse, which itself throws AUTH_FAILED
- * without EBAY_APP_ID (intentionally unset). Pricing failure is non-fatal:
+ * back to eBay Browse asking prices only if both fail. tcgapi.net is still a
+ * stub, so in practice pokemonpricetracker answers (live since 2026-09-25);
+ * ebay-browse throws AUTH_FAILED without EBAY_APP_ID (intentionally unset). Pricing failure is non-fatal:
  * getPriceWithCache's caller returns pricing: null and keeps going.
  */
 
@@ -25,12 +24,13 @@ import { tcgapiCompsProvider } from './tcgapi-comps';
 import { pokemonPriceTrackerProvider } from './pokemonpricetracker';
 import { ebayBrowseProvider } from './ebay-browse';
 import { PricingError } from '@/lib/types/pricing';
-import type { PricingProvider } from './provider';
+import type { PriceLookup, PricingProvider } from './provider';
 import type { PricingResult } from '@/lib/types/domain';
 import type { DbResult } from '@/lib/types/db';
 import type { PriceCache } from '@/lib/types/db';
 
 export { buildQuery } from './ebay-browse';
+export type { PriceLookup } from './provider';
 
 export type PriceTrend = 'up' | 'down' | 'stable' | 'new';
 
@@ -47,11 +47,11 @@ const PROVIDER_CHAIN: PricingProvider[] = [
 ];
 
 /** Tries each provider in PROVIDER_CHAIN, returning the first success. Throws the last error if all fail. */
-async function searchWithFallback(query: string): Promise<PricingResult> {
+async function searchWithFallback(query: string, card?: PriceLookup): Promise<PricingResult> {
   let lastErr: unknown;
   for (const provider of PROVIDER_CHAIN) {
     try {
-      return await provider.searchSoldListings(query);
+      return await provider.searchSoldListings(query, card);
     } catch (err) {
       lastErr = err;
       console.warn(
@@ -94,7 +94,8 @@ function priceCacheToResult(row: PriceCache): PricingResult {
  */
 export async function getPriceWithCache(
   query: string,
-  fingerprint: string
+  fingerprint: string,
+  card?: PriceLookup
 ): Promise<DbResult<PriceWithCacheResult>> {
   try {
     // 1. Cache hit?
@@ -120,7 +121,7 @@ export async function getPriceWithCache(
     const previousAvg = prevResult.success ? prevResult.data : null;
 
     // 3. Fetch from the provider chain.
-    const pricing = await searchWithFallback(query);
+    const pricing = await searchWithFallback(query, card);
 
     // 4. Write to cache. Domain Sale has no currency; db Sale requires it — default USD.
     const dbSales = pricing.last_10_sales.map((s) => ({

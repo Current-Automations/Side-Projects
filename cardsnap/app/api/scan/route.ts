@@ -103,7 +103,14 @@ export async function POST(request: Request): Promise<Response> {
 
   // 6. Fetch pricing (cache-first, 4hr TTL). Non-fatal on failure.
   const query = buildQuery(identification.data);
-  const priceResult = await getPriceWithCache(query, matched.data.fingerprint);
+  const priceResult = await getPriceWithCache(query, matched.data.fingerprint, {
+    card_name: identification.data.card_name,
+    set_name: identification.data.set_name,
+    card_number: identification.data.card_number,
+    tcgdex_id: matched.data.card?.id,
+    finish: identification.data.finish,
+    is_graded: identification.data.is_graded,
+  });
   if (!priceResult.success) {
     console.warn(`[scan] pricing unavailable: ${priceResult.error}`);
   }

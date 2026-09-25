@@ -53,7 +53,13 @@ export async function GET(
     needs_confirmation: false,
   });
 
-  const priceResult = await getPriceWithCache(query, fingerprint);
+  const priceResult = await getPriceWithCache(query, fingerprint, {
+    card_name: card.name,
+    card_number: card.local_id,
+    tcgdex_id: card.id,
+    finish: 'normal',
+    is_graded: false,
+  });
   if (!priceResult.success) {
     return errorResponse(priceResult.error, ApiErrorCode.DB_ERROR, 502);
   }
