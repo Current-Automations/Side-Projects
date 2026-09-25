@@ -39,7 +39,9 @@ let _env: Env | null = null;
 /** Returns parsed and validated environment variables. Throws on first access if required vars are missing. */
 export function getEnv(): Env {
   if (!_env) {
-    _env = EnvSchema.parse(process.env);
+    // `KEY=` in .env.local arrives as "", which should read as unset, not fail min(1).
+    const set = Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== ''));
+    _env = EnvSchema.parse(set);
   }
   return _env;
 }

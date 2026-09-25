@@ -17,6 +17,7 @@ export type InboundMessage =
   | { type: 'CAPTURE_FRAME'; imageBase64: string }
   | { type: 'GET_STATUS' }
   | { type: 'SIGN_OUT' }
+  | { type: 'SIGN_IN'; email: string; password: string; create: boolean }
   | { type: 'SUBMIT_CORRECTION'; scanId: string; correctedName: string };
 
 // ---------------------------------------------------------------------------
@@ -27,5 +28,6 @@ export type OutboundMessage =
   | { type: 'SCAN_RESULT'; data: ScanResultPayload }
   | { type: 'SCAN_ERROR'; code: string; message: string }
   | { type: 'AUTH_REQUIRED' }
+  | { type: 'AUTH_RESULT'; ok: boolean; message: string }
   | { type: 'RATE_LIMIT_EXCEEDED'; remaining: 0 }
   | { type: 'STATUS'; authenticated: boolean; planTier?: string; remainingScans?: number | null };

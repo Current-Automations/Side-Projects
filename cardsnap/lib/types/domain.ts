@@ -110,6 +110,23 @@ export const ScanResultSchema = z.object({
   trend: PriceTrendSchema.nullable(),
   remaining_scans: z.number().int().min(0).nullable(),
   cache_hit: z.boolean(),
+  /** The catalog card the identification resolved to; null on a cache hit or no match. */
+  matched_card: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      set_id: z.string(),
+      set_name: z.string().nullable(),
+      local_id: z.string(),
+      image_url: z.string().nullable(),
+    })
+    .nullable()
+    .optional(),
+  /** An anniversary reprint of the matched card, told apart only by its logo stamp. */
+  stamped_reprint: z.string().nullable().optional(),
+  /** True when the catalog match was too weak to trust. */
+  needs_confirmation: z.boolean().optional(),
+  printings: z.number().int().optional(),
 });
 
 export type ScanResult = z.infer<typeof ScanResultSchema>;

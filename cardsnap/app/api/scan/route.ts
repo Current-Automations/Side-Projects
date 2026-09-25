@@ -27,6 +27,8 @@ import { ApiErrorCode } from '@/lib/types/api';
 import { ScanRequestSchema } from '@/lib/types/api';
 import type { ApiErrorCodeValue } from '@/lib/types/api';
 import { buildQuery, getPriceWithCache } from '@/lib/pricing';
+import { cardImageUrl, findStampedReprint, getSetName } from '@/lib/catalog';
+import { catalogSnapshotPrice } from '@/lib/pricing/catalog-snapshot';
 
 const MODEL_USED = 'gpt-4o';
 
@@ -102,19 +104,32 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   // 6. Fetch pricing (cache-first, 4hr TTL). Non-fatal on failure.
+  // A catalog match prices with the catalog's own name/set/number, not the model's read.
+  const matchedCard = matched.data.card;
+  const matchedSetName = matchedCard ? await getSetName(matchedCard.set_id) : null;
+  const stampedReprint = matchedCard ? await findStampedReprint(matchedCard.name, matchedCard.set_id) : null;
+  // Several printings share the name and nothing picked one: any price would be a random printing's.
+  const ambiguous = matched.data.needsConfirmation && matched.data.printings > 1;
   const query = buildQuery(identification.data);
-  const priceResult = await getPriceWithCache(query, matched.data.fingerprint, {
-    card_name: identification.data.card_name,
-    set_name: identification.data.set_name,
-    card_number: identification.data.card_number,
-    tcgdex_id: matched.data.card?.id,
+  const priceResult = ambiguous
+    ? ({ success: false, error: `${matched.data.printings} printings, none picked` } as const)
+    : await getPriceWithCache(query, matched.data.fingerprint, {
+    card_name: matchedCard?.name ?? identification.data.card_name,
+    set_name: matchedSetName ?? identification.data.set_name,
+    card_number: matchedCard?.local_id ?? identification.data.card_number,
+    tcgdex_id: matchedCard?.id,
     finish: identification.data.finish,
     is_graded: identification.data.is_graded,
   });
   if (!priceResult.success) {
     console.warn(`[scan] pricing unavailable: ${priceResult.error}`);
   }
-  const pricing = priceResult.success ? priceResult.data.pricing : null;
+  // Live lookup missed (no match, older set, credits spent): fall back to the free saved price.
+  const pricing = priceResult.success
+    ? priceResult.data.pricing
+    : matchedCard && !ambiguous
+      ? catalogSnapshotPrice(matchedCard, identification.data.finish)
+      : null;
   const trend = priceResult.success ? priceResult.data.trend : null;
   const pricingCacheHit = priceResult.success ? priceResult.data.cacheHit : false;
 
@@ -147,6 +162,19 @@ export async function POST(request: Request): Promise<Response> {
       trend,
       cache_hit: pricingCacheHit,
       remaining_scans: remainingScans,
+      matched_card: matched.data.card
+        ? {
+            id: matched.data.card.id,
+            name: matched.data.card.name,
+            set_id: matched.data.card.set_id,
+            set_name: matchedSetName,
+            local_id: matched.data.card.local_id,
+            image_url: cardImageUrl(matched.data.card.image_base_url, 'low', 'webp'),
+          }
+        : null,
+      stamped_reprint: stampedReprint,
+      needs_confirmation: matched.data.needsConfirmation || identification.data.needs_confirmation,
+      printings: matched.data.printings,
     },
   });
 }

@@ -7,7 +7,7 @@
  *   - Read/clear the Supabase JWT from chrome.storage.local
  *   - Handle CAPTURE_FRAME: validate JWT → POST /api/scan → relay result
  *   - Handle GET_STATUS: check JWT validity → send STATUS
- *   - Handle SIGN_OUT: clear JWT from storage
+ *   - Handle SIGN_IN / SIGN_OUT: Supabase email + password session in storage
  *   - Handle SUBMIT_CORRECTION: POST /api/scan/correct
  *
  * MV3 rule: never cache state in module-level variables — read from
@@ -17,8 +17,9 @@
 
 import type { InboundMessage, OutboundMessage } from './types';
 
-const API_BASE = 'https://cardsnap.app';
+const API_BASE = __API_BASE__;
 const JWT_KEY = 'cardsnap_jwt';
+const REFRESH_KEY = 'cardsnap_refresh';
 const EXPIRY_BUFFER_SECONDS = 60;
 
 // ---------------------------------------------------------------------------
@@ -51,14 +52,55 @@ function isTokenValid(token: string): boolean {
 }
 
 async function getValidJwt(): Promise<{ token: string; payload: JwtPayload } | null> {
-  const result = await chrome.storage.local.get(JWT_KEY);
-  const token = result[JWT_KEY] as string | undefined;
-  if (!token) return null;
+  const result = await chrome.storage.local.get([JWT_KEY, REFRESH_KEY]);
+  let token = result[JWT_KEY] as string | undefined;
+  if (!token || !isTokenValid(token)) {
+    const refresh = result[REFRESH_KEY] as string | undefined;
+    if (!refresh) return null;
+    const renewed = await supabaseAuth('refresh_token', { refresh_token: refresh });
+    if (!renewed.ok) return null;
+    token = renewed.token;
+  }
   const payload = decodeJwtPayload(token);
-  if (!payload) return null;
-  const nowSeconds = Math.floor(Date.now() / 1000);
-  if (payload.exp - nowSeconds <= EXPIRY_BUFFER_SECONDS) return null;
-  return { token, payload };
+  return payload ? { token, payload } : null;
+}
+
+type AuthOutcome = { ok: true; token: string } | { ok: false; message: string };
+
+/** Supabase GoTrue: grant 'password' or 'refresh_token' on /token, or 'signup'. Stores the session. */
+async function supabaseAuth(
+  grant: 'password' | 'refresh_token' | 'signup',
+  body: Record<string, string>,
+): Promise<AuthOutcome> {
+  const url =
+    grant === 'signup'
+      ? `${__SUPABASE_URL__}/auth/v1/signup`
+      : `${__SUPABASE_URL__}/auth/v1/token?grant_type=${grant}`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: __SUPABASE_ANON_KEY__ },
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : 'Network request failed' };
+  }
+  const data = (await res.json().catch(() => ({}))) as {
+    access_token?: string;
+    refresh_token?: string;
+    msg?: string;
+    error_description?: string;
+  };
+  if (!res.ok) {
+    return { ok: false, message: data.error_description ?? data.msg ?? `Sign-in failed (HTTP ${res.status})` };
+  }
+  if (!data.access_token || !data.refresh_token) {
+    // Signup with email confirmation on returns no session until the link is clicked.
+    return { ok: false, message: 'Account created. Confirm it from the email, then sign in.' };
+  }
+  await chrome.storage.local.set({ [JWT_KEY]: data.access_token, [REFRESH_KEY]: data.refresh_token });
+  return { ok: true, token: data.access_token };
 }
 
 // ---------------------------------------------------------------------------
@@ -90,8 +132,17 @@ async function handleMessage(
       break;
 
     case 'SIGN_OUT':
-      await chrome.storage.local.remove(JWT_KEY);
+      await chrome.storage.local.remove([JWT_KEY, REFRESH_KEY]);
       break;
+
+    case 'SIGN_IN': {
+      const outcome = await supabaseAuth(message.create ? 'signup' : 'password', {
+        email: message.email,
+        password: message.password,
+      });
+      sendResponse({ type: 'AUTH_RESULT', ok: outcome.ok, message: outcome.ok ? 'Signed in' : outcome.message });
+      break;
+    }
 
     case 'SUBMIT_CORRECTION':
       await handleSubmitCorrection(message.scanId, message.correctedName, sendResponse);
@@ -182,10 +233,7 @@ async function handleCaptureFrame(
 async function handleGetStatus(
   sendResponse: (response: OutboundMessage) => void,
 ): Promise<void> {
-  const result = await chrome.storage.local.get(JWT_KEY);
-  const token = result[JWT_KEY] as string | undefined;
-
-  if (!token || !isTokenValid(token)) {
+  if (!(await getValidJwt())) {
     sendResponse({ type: 'STATUS', authenticated: false });
     return;
   }

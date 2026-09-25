@@ -31,6 +31,8 @@ export {
 export {
   findCatalogCard,
   getCatalogCardById,
+  getSetName,
+  findStampedReprint,
   type CatalogDbResult,
 } from './store';
 

@@ -258,8 +258,13 @@
   <!-- Auth required -->
   <div id="state-auth" class="hidden section">
     <div class="cta-title">Sign in to scan</div>
-    <div class="cta-body">Create a free account to start identifying and pricing your cards.</div>
-    <a href="https://cardsnap.app/login" target="_blank" class="btn-primary" style="text-decoration:none;">Sign in / Sign up</a>
+    <form id="auth-form" class="correction-form" style="display:flex;flex-direction:column;gap:8px;">
+      <input id="auth-email" type="email" placeholder="Email" autocomplete="email" required />
+      <input id="auth-password" type="password" placeholder="Password" autocomplete="current-password" minlength="6" required />
+      <button id="btn-sign-in" type="submit" class="btn-primary">Sign in</button>
+      <button id="btn-create" type="button" class="btn-primary" style="background:#27272a;">Create account</button>
+    </form>
+    <div id="auth-message" class="cta-body" style="margin-top:10px;"></div>
   </div>
 
   <!-- Error -->

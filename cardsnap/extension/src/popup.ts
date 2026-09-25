@@ -53,19 +53,14 @@ function formatDate(iso: string): string {
 }
 
 function buildCardLabel(card: ScanResultPayload['card']): string {
-  const parts: string[] = [
-    String(card.year),
-    card.manufacturer,
-    card.product_line,
-  ];
-  if (card.set_variant) parts.push(card.set_variant);
-  parts.push(card.player_name);
-  if (card.parallel_name && card.parallel_name !== 'Base') parts.push(card.parallel_name);
+  const parts: string[] = [card.card_name];
+  if (card.set_name) parts.push(card.set_name);
   if (card.card_number) parts.push(`#${card.card_number}`);
+  if (card.finish !== 'normal') parts.push(card.finish.replace('_', ' '));
   if (card.is_graded && card.grade_company) {
     parts.push(`${card.grade_company}${card.grade_value ? ' ' + card.grade_value : ''}`);
   }
-  return parts.join(' ');
+  return parts.join(' · ');
 }
 
 function renderTrend(trend: ScanResultPayload['trend'], badge: HTMLElement): void {
@@ -260,6 +255,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const name = input.value.trim();
     if (name) submitCorrection(name);
   });
+
+  const signIn = (create: boolean): void => {
+    const email = el<HTMLInputElement>('auth-email').value.trim();
+    const password = el<HTMLInputElement>('auth-password').value;
+    if (!email || password.length < 6) {
+      el('auth-message').textContent = 'Email and a password of 6+ characters.';
+      return;
+    }
+    el('auth-message').textContent = create ? 'Creating account...' : 'Signing in...';
+    const msg: InboundMessage = { type: 'SIGN_IN', email, password, create };
+    chrome.runtime.sendMessage(msg, (response: OutboundMessage) => {
+      if (response?.type !== 'AUTH_RESULT') {
+        el('auth-message').textContent = 'Background worker not responding.';
+        return;
+      }
+      el('auth-message').textContent = response.message;
+      if (response.ok) handleOutbound({ type: 'STATUS', authenticated: true });
+    });
+  };
+  el('auth-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    signIn(false);
+  });
+  el('btn-create').addEventListener('click', () => signIn(true));
 
   // Listen for pushed messages (e.g. scan result from content script relay)
   chrome.runtime.onMessage.addListener((msg: OutboundMessage) => {

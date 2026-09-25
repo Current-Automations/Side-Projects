@@ -105,36 +105,41 @@ export const pokemonPriceTrackerProvider: PricingProvider = {
       throw new PricingError(PRICING_ERROR.NO_RESULTS, 'pokemonpricetracker needs the identified card, not a free-text query');
     }
 
-    const params = new URLSearchParams();
+    const search = async (params: URLSearchParams): Promise<PptCard[]> => {
+      const res = await fetch(`${BASE_URL}?${params}`, {
+        headers: { Authorization: `Bearer ${key}` },
+      });
+      if (res.status === 401 || res.status === 403) {
+        throw new PricingError(PRICING_ERROR.AUTH_FAILED, `pokemonpricetracker rejected the key (HTTP ${res.status})`);
+      }
+      if (!res.ok) {
+        const limit = res.status === 429 ? ' (daily or per-minute limit hit)' : '';
+        throw new PricingError(PRICING_ERROR.REQUEST_FAILED, `pokemonpricetracker HTTP ${res.status}${limit}`);
+      }
+      const parsed = ResponseSchema.safeParse(await res.json());
+      if (!parsed.success) {
+        throw new PricingError(
+          PRICING_ERROR.VALIDATION_FAILED,
+          `pokemonpricetracker response shape changed: ${parsed.error.message}`
+        );
+      }
+      return parsed.data.data;
+    };
+
+    let match: PptCard | null = null;
     if (card.tcgdex_id) {
-      params.set('search', card.tcgdex_id);
-      params.set('limit', '1');
-    } else {
-      params.set('search', card.card_name);
-      if (card.set_name) params.set('set', card.set_name);
-      params.set('limit', '3');
+      // Search by id finds Scarlet & Violet cards directly (1 credit) but not older
+      // sets ("swsh10-001" returns a promo), so those fall through to name + set.
+      match = pickCard(await search(new URLSearchParams({ search: card.tcgdex_id, limit: '1' })), card);
     }
-
-    const res = await fetch(`${BASE_URL}?${params}`, {
-      headers: { Authorization: `Bearer ${key}` },
-    });
-    if (res.status === 401 || res.status === 403) {
-      throw new PricingError(PRICING_ERROR.AUTH_FAILED, `pokemonpricetracker rejected the key (HTTP ${res.status})`);
+    if (!match && (!card.tcgdex_id || card.set_name)) {
+      const params = new URLSearchParams({ search: card.card_name });
+      // TCGdex's "Pokémon GO" found nothing as a set filter (2026-09-25); send it unaccented.
+      if (card.set_name) params.set('set', card.set_name.normalize('NFD').replace(/[̀-ͯ]/g, ''));
+      // A set can hold several printings of one name (regular, full art, alt art).
+      params.set('limit', card.tcgdex_id ? '5' : '3');
+      match = pickCard(await search(params), card);
     }
-    if (!res.ok) {
-      const limit = res.status === 429 ? ' (daily or per-minute limit hit)' : '';
-      throw new PricingError(PRICING_ERROR.REQUEST_FAILED, `pokemonpricetracker HTTP ${res.status}${limit}`);
-    }
-
-    const parsed = ResponseSchema.safeParse(await res.json());
-    if (!parsed.success) {
-      throw new PricingError(
-        PRICING_ERROR.VALIDATION_FAILED,
-        `pokemonpricetracker response shape changed: ${parsed.error.message}`
-      );
-    }
-
-    const match = pickCard(parsed.data.data, card);
     if (!match) {
       const wanted = card.tcgdex_id ?? `${card.card_name} ${card.card_number ?? ''}`.trim();
       throw new PricingError(PRICING_ERROR.NO_RESULTS, `pokemonpricetracker: no exact match for ${wanted}`);

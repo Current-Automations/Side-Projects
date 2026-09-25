@@ -5,6 +5,7 @@
   "description": "Snap trading card listings from live streams",
   "permissions": ["activeTab", "storage"],
   "host_permissions": [
+    "http://localhost:3000/*",
     "*://*.whatnot.com/*",
     "*://*.tiktok.com/*",
     "*://*.instagram.com/*"
