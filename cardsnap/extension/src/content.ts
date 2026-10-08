@@ -224,7 +224,7 @@ function captureFrame(): void {
 window.addEventListener(
   'keydown',
   (e: KeyboardEvent) => {
-    if (e.shiftKey && e.key === 'S') {
+    if (e.shiftKey && e.code === 'KeyS') {
       // Holding the keys auto-repeats; one press is one scan (each costs credits).
       if (e.repeat || scanning) {
         e.stopImmediatePropagation();
