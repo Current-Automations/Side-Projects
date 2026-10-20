@@ -9,6 +9,7 @@
  *   - Handle GET_STATUS: check JWT validity → send STATUS
  *   - Handle SIGN_IN / SIGN_OUT: Supabase email + password session in storage
  *   - Handle SUBMIT_CORRECTION: POST /api/scan/correct
+ *   - Handle PICK_PRINTING: POST /api/scan/pick, relay the picked printing's price
  *
  * MV3 rule: never cache state in module-level variables — read from
  * chrome.storage.local on every message because the worker can be killed
@@ -146,6 +147,10 @@ async function handleMessage(
 
     case 'SUBMIT_CORRECTION':
       await handleSubmitCorrection(message.scanId, message.correctedName, sendResponse);
+      break;
+
+    case 'PICK_PRINTING':
+      await handlePickPrinting(message.scanId, message.cardId, sendResponse);
       break;
   }
 }
@@ -293,4 +298,44 @@ async function handleSubmitCorrection(
       message: errBody.error ?? `Correction failed with status ${response.status}`,
     });
   }
+}
+
+// ---------------------------------------------------------------------------
+// PICK_PRINTING
+// ---------------------------------------------------------------------------
+
+async function handlePickPrinting(
+  scanId: string,
+  cardId: string | null,
+  sendResponse: (response: OutboundMessage) => void,
+): Promise<void> {
+  const auth = await getValidJwt();
+  if (!auth) {
+    sendResponse({ type: 'AUTH_REQUIRED' });
+    return;
+  }
+
+  let body: { success?: boolean; data?: { pricing?: unknown }; error?: string; code?: string };
+  try {
+    const response = await fetch(`${API_BASE}/api/scan/pick`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.token}` },
+      body: JSON.stringify({ scan_id: scanId, user_id: auth.payload.sub, card_id: cardId }),
+    });
+    body = (await response.json()) as typeof body;
+  } catch (err) {
+    sendResponse({
+      type: 'SCAN_ERROR',
+      code: 'NETWORK_ERROR',
+      message: err instanceof Error ? err.message : 'Pick request failed',
+    });
+    return;
+  }
+
+  if (!body.success) {
+    sendResponse({ type: 'SCAN_ERROR', code: body.code ?? 'PICK_FAILED', message: body.error ?? 'Pick failed' });
+    return;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sendResponse({ type: 'PICK_RESULT', pricing: (body.data?.pricing ?? null) as any });
 }

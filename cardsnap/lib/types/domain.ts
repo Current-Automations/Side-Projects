@@ -39,6 +39,8 @@ export const CardIdentificationObject = z.object({
   set_name: z.string().optional(),
   /** Printed collector number (TCGdex local_id), e.g. "125" or "125/197". */
   card_number: z.string().optional(),
+  /** HP printed on a Pokemon card; tells printings of the same name apart when the number is misread. */
+  hp: z.coerce.number().int().positive().optional(),
   finish: FinishSchema,
   is_graded: z.boolean(),
   grade_company: GradeCompanySchema.optional(),
@@ -102,6 +104,16 @@ export type PricingResult = z.infer<typeof PricingResultSchema>;
 export const PriceTrendSchema = z.enum(['up', 'down', 'stable', 'new']);
 export type PriceTrend = z.infer<typeof PriceTrendSchema>;
 
+export const MatchedCardSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  set_id: z.string(),
+  set_name: z.string().nullable(),
+  local_id: z.string(),
+  image_url: z.string().nullable(),
+});
+export type MatchedCard = z.infer<typeof MatchedCardSchema>;
+
 export const ScanResultSchema = z.object({
   scan_id: z.string().uuid(),
   card: CardIdentificationSchema,
@@ -111,22 +123,14 @@ export const ScanResultSchema = z.object({
   remaining_scans: z.number().int().min(0).nullable(),
   cache_hit: z.boolean(),
   /** The catalog card the identification resolved to; null on a cache hit or no match. */
-  matched_card: z
-    .object({
-      id: z.string(),
-      name: z.string(),
-      set_id: z.string(),
-      set_name: z.string().nullable(),
-      local_id: z.string(),
-      image_url: z.string().nullable(),
-    })
-    .nullable()
-    .optional(),
+  matched_card: MatchedCardSchema.nullable().optional(),
   /** An anniversary reprint of the matched card, told apart only by its logo stamp. */
   stamped_reprint: z.string().nullable().optional(),
   /** True when the catalog match was too weak to trust. */
   needs_confirmation: z.boolean().optional(),
   printings: z.number().int().optional(),
+  /** Several printings and none picked: the ones to show side by side, best first. */
+  candidates: z.array(MatchedCardSchema).optional(),
 });
 
 export type ScanResult = z.infer<typeof ScanResultSchema>;

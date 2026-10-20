@@ -5,7 +5,7 @@
  * popup, and background service worker.
  */
 
-import type { ScanResult } from '../../lib/types/domain';
+import type { PricingResult, ScanResult } from '../../lib/types/domain';
 
 export type ScanResultPayload = ScanResult;
 
@@ -18,7 +18,8 @@ export type InboundMessage =
   | { type: 'GET_STATUS' }
   | { type: 'SIGN_OUT' }
   | { type: 'SIGN_IN'; email: string; password: string; create: boolean }
-  | { type: 'SUBMIT_CORRECTION'; scanId: string; correctedName: string };
+  | { type: 'SUBMIT_CORRECTION'; scanId: string; correctedName: string }
+  | { type: 'PICK_PRINTING'; scanId: string; cardId: string | null };
 
 // ---------------------------------------------------------------------------
 // Messages the background sends
@@ -26,6 +27,7 @@ export type InboundMessage =
 
 export type OutboundMessage =
   | { type: 'SCAN_RESULT'; data: ScanResultPayload }
+  | { type: 'PICK_RESULT'; pricing: PricingResult | null }
   | { type: 'SCAN_ERROR'; code: string; message: string }
   | { type: 'AUTH_REQUIRED' }
   | { type: 'AUTH_RESULT'; ok: boolean; message: string }

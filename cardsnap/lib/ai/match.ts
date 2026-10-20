@@ -26,6 +26,8 @@ export interface CardMatch {
   needsConfirmation: boolean;
   /** Catalog cards carrying the read name exactly; more than one means the name alone can't say which. */
   printings: number;
+  /** Up to 6 printings of the read name, best first, for the picker. */
+  candidates: CatalogCardRow[];
 }
 
 export type MatchResult =
@@ -37,6 +39,7 @@ export async function match(identification: CardIdentification): Promise<MatchRe
     card_name: identification.card_name,
     set_id: identification.set_id,
     card_number: identification.card_number,
+    hp: identification.hp,
   });
   if (!found.success) {
     return { success: false, error: `match (catalog lookup): ${found.error}` };
@@ -56,11 +59,11 @@ export async function match(identification: CardIdentification): Promise<MatchRe
     // Nothing in the catalog matched — caller should confirm before trusting.
     return {
       success: true,
-      data: { fingerprint, card: null, matchConfidence: 0, needsConfirmation: true, printings: 0 },
+      data: { fingerprint, card: null, matchConfidence: 0, needsConfirmation: true, printings: 0, candidates: [] },
     };
   }
 
-  const { match_confidence, printings } = found.data;
+  const { match_confidence, printings, candidates } = found.data;
   return {
     success: true,
     data: {
@@ -69,6 +72,7 @@ export async function match(identification: CardIdentification): Promise<MatchRe
       matchConfidence: match_confidence,
       needsConfirmation: match_confidence < MATCH_CONFIRMATION_THRESHOLD,
       printings,
+      candidates,
     },
   };
 }

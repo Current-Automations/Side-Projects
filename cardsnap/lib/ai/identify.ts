@@ -36,6 +36,7 @@ const FIELD_SPEC = `Return a JSON object with these exact fields:
 - set_id: string, optional (the TCGdex set id, only if you can actually see the set symbol or code)
 - set_name: string, optional (only if the set is readable or unmistakable from the artwork)
 - card_number: string, optional (the collector number printed in a bottom corner, in the form "number/total"; give just "number" if the total is unreadable)
+- hp: integer, optional (the HP printed top right on a Pokemon card, e.g. 180; leave out for trainers and energy)
 - finish: one of "normal", "holo", "reverse", "first_edition", "unlimited", "promo"
 - is_graded: boolean (true if the card is inside a graded slab, e.g. PSA/BGS/SGC/CGC)
 - grade_company: string, optional, one of "PSA", "BGS", "SGC", "CGC" (required when is_graded is true)
@@ -43,7 +44,7 @@ const FIELD_SPEC = `Return a JSON object with these exact fields:
 - confidence: number between 0 and 1 (overall confidence in card_name)
 - finish_confidence: number between 0 and 1 (confidence specifically in the finish)
 
-The collector number is the most useful field: always include it when you can read its digits, even if you are unsure of the set. Leave set_id and set_name out unless you can actually read or recognize them; never fill them from memory of which set a Pokemon usually appears in.
+The collector number and the HP are the most useful fields: always include them when you can read their digits, even if you are unsure of the set. The HP is printed large, so read it even when the number is too small. Leave set_id and set_name out unless you can actually read or recognize them; never fill them from memory of which set a Pokemon usually appears in.
 
 If there is no Pokemon card you can identify, return {"error": "<what you see instead>"}, e.g. {"error": "no card visible, host is talking to camera"} or {"error": "card too small and blurry to read"}.
 

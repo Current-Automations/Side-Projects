@@ -25,6 +25,8 @@ export interface PriceLookup {
   tcgdex_id?: string;
   finish: CardIdentification['finish'];
   is_graded: boolean;
+  grade_company?: CardIdentification['grade_company'];
+  grade_value?: string;
 }
 
 export type PricingProviderSource = 'tcgapi-comps' | 'pokemonpricetracker' | 'ebay-browse' | 'ebay-insights';

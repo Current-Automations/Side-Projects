@@ -29,9 +29,14 @@ function printedTotal(n: string | undefined): number | null {
   return m ? parseInt(m[1], 10) : null;
 }
 
+function cardHp(card: CatalogCardRow): number | null {
+  const hp = (card.raw as { hp?: unknown } | null)?.hp;
+  return typeof hp === 'number' ? hp : null;
+}
+
 function scoreMatch(
   card: CatalogCardRow,
-  params: { card_name: string; set_id?: string; card_number?: string },
+  params: { card_name: string; set_id?: string; card_number?: string; hp?: number },
   setSizes: Map<string, number | null>
 ): number {
   let score = 0;
@@ -43,8 +48,13 @@ function scoreMatch(
   const sameSize = total !== null && setSizes.get(card.set_id) === total;
   if ((params.set_id && card.set_id === params.set_id) || sameSize) score += 2;
   if (params.card_number && numberKey(card.local_id) === numberKey(params.card_number)) score += 2;
+  // HP is printed large and read far more reliably than the number, so a mismatch rules the printing out.
+  const hp = cardHp(card);
+  if (params.hp && hp !== null) score += hp === params.hp ? 2 : -3;
   return score;
 }
+
+const MAX_CANDIDATES = 6;
 
 /**
  * Fuzzy catalog lookup. Returns the best match (score >= 3) or null.
@@ -55,7 +65,10 @@ export async function findCatalogCard(params: {
   card_name: string;
   set_id?: string;
   card_number?: string;
-}): Promise<CatalogDbResult<{ card: CatalogCardRow; match_confidence: number; printings: number } | null>> {
+  hp?: number;
+}): Promise<
+  CatalogDbResult<{ card: CatalogCardRow; match_confidence: number; printings: number; candidates: CatalogCardRow[] } | null>
+> {
   try {
     const db = getServerClient();
 
@@ -94,17 +107,28 @@ export async function findCatalogCard(params: {
       .sort((a, b) => b.score - a.score);
     const [best, runnerUp] = scored;
 
-    // Max possible score is 7 (name exact + set_id + card_number), require >= 3
+    // Max possible score is 7 (name exact + set_id + card_number), 9 with a matching HP; require >= 3
     if (best.score < 3) return { success: true, data: null };
+    const maxScore = params.hp ? 9 : 7;
 
     // Two printings scoring the same (same name + number in two sets) is a coin flip, not a match.
     const tied = runnerUp !== undefined && runnerUp.score === best.score;
     const printings = rows.filter((r) => normalize(r.name) === normalize(params.card_name)).length;
-    let match_confidence = tied ? Math.min(best.score / 7, 0.5) : best.score / 7;
+    // A number was read and the winner doesn't carry it: the read is off somewhere, so let him pick.
+    const numberMissed =
+      !!params.card_number && printings > 1 && numberKey(best.card.local_id) !== numberKey(params.card_number);
+    let match_confidence = tied || numberMissed ? Math.min(best.score / maxScore, 0.5) : best.score / maxScore;
     // Name alone is enough when the catalog holds only one card by that name (Appletun V).
     if (best.score === 3 && printings === 1) match_confidence = 0.8;
 
-    return { success: true, data: { card: best.card, match_confidence, printings } };
+    // Best-scoring printings of the read name, for the picker when the match can't settle it.
+    // HP is misread too (Rayquaza C read as 120), so a wrong HP only ranks a printing lower here.
+    const candidates = scored
+      .filter((s) => normalize(s.card.name) === normalize(params.card_name))
+      .slice(0, MAX_CANDIDATES)
+      .map((s) => s.card);
+
+    return { success: true, data: { card: best.card, match_confidence, printings, candidates } };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
@@ -125,6 +149,14 @@ export async function getCatalogCardById(id: string): Promise<CatalogDbResult<Ca
 export async function getSetName(setId: string): Promise<string | null> {
   const { data } = await getServerClient().from('catalog_sets').select('name').eq('id', setId).maybeSingle();
   return (data as { name: string } | null)?.name ?? null;
+}
+
+export async function getSetNames(setIds: string[]): Promise<Map<string, string>> {
+  const names = new Map<string, string>();
+  if (setIds.length === 0) return names;
+  const { data } = await getServerClient().from('catalog_sets').select('id, name').in('id', [...new Set(setIds)]);
+  for (const s of (data ?? []) as { id: string; name: string }[]) names.set(s.id, s.name);
+  return names;
 }
 
 /** Anniversary reprint sets: same art and printed number as the original, plus a logo stamp. */

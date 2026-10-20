@@ -13,7 +13,9 @@
  *   costs 1 credit and is matched exactly.
  * - Without an id, `search=<name>&set=<set name>` narrows well; the result is
  *   only trusted when name and collector number both match.
- * - Graded (PSA) prices need includeEbay (+1 credit per card), not wired yet.
+ * - Graded prices come from includeEbay (+1 credit per card): `ebay.salesByGrade`
+ *   keyed "psa10", "bgs9_5", "cgc9" etc., built from eBay and Fanatics sales.
+ *   Only asked for when the slab's grade was read (verified 2026-10-19).
  */
 
 import { z } from 'zod';
@@ -25,6 +27,16 @@ const BASE_URL = 'https://www.pokemonpricetracker.com/api/v2/cards';
 
 const VariantSchema = z.object({
   marketPrice: z.number().nullable().optional(),
+});
+
+const GradeSalesSchema = z.object({
+  count: z.number().nullable().optional(),
+  medianPrice: z.number().nullable().optional(),
+  lastSaleDate: z.string().nullable().optional(),
+  smartMarketPrice: z
+    .object({ price: z.number().nullable().optional(), confidence: z.string().nullable().optional() })
+    .nullable()
+    .optional(),
 });
 
 const CardSchema = z.object({
@@ -41,6 +53,10 @@ const CardSchema = z.object({
     .nullable()
     .optional(),
   variants: z.record(z.string(), VariantSchema).nullable().optional(),
+  ebay: z
+    .object({ salesByGrade: z.record(z.string(), GradeSalesSchema).nullable().optional() })
+    .nullable()
+    .optional(),
 });
 
 const ResponseSchema = z.object({ data: z.array(CardSchema) });
@@ -93,6 +109,22 @@ export function pickPrice(c: PptCard, finish: PriceLookup['finish']): { price: n
   return null;
 }
 
+/** "PSA" + "9.5" -> "psa9_5", the salesByGrade key. */
+export function gradeKey(company: string, value: string): string {
+  return `${company.toLowerCase()}${value.replace('.', '_')}`;
+}
+
+export function pickGradedPrice(
+  c: PptCard,
+  company: string,
+  value: string
+): { price: number; sales: number; confidence: string | null } | null {
+  const g = c.ebay?.salesByGrade?.[gradeKey(company, value)];
+  const price = g?.smartMarketPrice?.price ?? g?.medianPrice ?? null;
+  if (!g || price == null) return null;
+  return { price, sales: g.count ?? 0, confidence: g.smartMarketPrice?.confidence ?? null };
+}
+
 export const pokemonPriceTrackerProvider: PricingProvider = {
   source: 'pokemonpricetracker',
 
@@ -105,7 +137,13 @@ export const pokemonPriceTrackerProvider: PricingProvider = {
       throw new PricingError(PRICING_ERROR.NO_RESULTS, 'pokemonpricetracker needs the identified card, not a free-text query');
     }
 
+    // A slab with a readable grade gets the graded sales (+1 credit); raw cards never pay for them.
+    const grade = card.is_graded && card.grade_company && card.grade_value
+      ? { company: card.grade_company, value: card.grade_value }
+      : null;
+
     const search = async (params: URLSearchParams): Promise<PptCard[]> => {
+      if (grade) params.set('includeEbay', 'true');
       const res = await fetch(`${BASE_URL}?${params}`, {
         headers: { Authorization: `Bearer ${key}` },
       });
@@ -145,6 +183,19 @@ export const pokemonPriceTrackerProvider: PricingProvider = {
       throw new PricingError(PRICING_ERROR.NO_RESULTS, `pokemonpricetracker: no exact match for ${wanted}`);
     }
 
+    if (grade) {
+      const g = pickGradedPrice(match, grade.company, grade.value);
+      if (g) {
+        return {
+          avg_sold_price: g.price,
+          last_10_sales: [],
+          sample_size: g.sales,
+          fetched_at: match.prices?.lastUpdated ?? new Date().toISOString(),
+          attribution: `${grade.company} ${grade.value} sold price via PokemonPriceTracker (${g.sales} sales${g.confidence ? `, ${g.confidence} confidence` : ''})`,
+        };
+      }
+    }
+
     const priced = pickPrice(match, card.finish);
     if (!priced) {
       throw new PricingError(
@@ -153,7 +204,11 @@ export const pokemonPriceTrackerProvider: PricingProvider = {
       );
     }
 
-    const graded = card.is_graded ? ', raw price, grade not priced' : '';
+    const graded = card.is_graded
+      ? grade
+        ? `, raw price, no ${grade.company} ${grade.value} sales`
+        : ', raw price, grade not read'
+      : '';
     return {
       avg_sold_price: priced.price,
       last_10_sales: [],

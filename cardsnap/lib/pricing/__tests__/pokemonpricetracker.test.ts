@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pickCard, pickPrice } from '../pokemonpricetracker';
+import { gradeKey, pickCard, pickGradedPrice, pickPrice } from '../pokemonpricetracker';
 
 // Shapes copied from live /api/v2/cards responses, 2026-09-25.
 const baseCharizard = {
@@ -49,5 +49,30 @@ describe('pickPrice', () => {
 
   it('returns null when there is no price at all', () => {
     expect(pickPrice(blackDot, 'holo')).toBeNull();
+  });
+});
+
+describe('pickGradedPrice', () => {
+  const card = {
+    name: 'Charizard ex',
+    ebay: {
+      salesByGrade: {
+        psa10: { count: 208, medianPrice: 87.99, smartMarketPrice: { price: 92.5, confidence: 'medium' } },
+        bgs9_5: { count: 3, medianPrice: 60, smartMarketPrice: null },
+      },
+    },
+  };
+
+  it('reads the smart market price for the slab grade', () => {
+    expect(pickGradedPrice(card, 'PSA', '10')).toEqual({ price: 92.5, sales: 208, confidence: 'medium' });
+  });
+
+  it('keys half grades with an underscore and falls back to the median', () => {
+    expect(gradeKey('BGS', '9.5')).toBe('bgs9_5');
+    expect(pickGradedPrice(card, 'BGS', '9.5')).toEqual({ price: 60, sales: 3, confidence: null });
+  });
+
+  it('returns null for a grade with no sales', () => {
+    expect(pickGradedPrice(card, 'PSA', '9')).toBeNull();
   });
 });

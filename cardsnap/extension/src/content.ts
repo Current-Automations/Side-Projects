@@ -5,6 +5,11 @@
  * frame, sends it to the background service worker, and shows the result in a
  * box over the stream with the time it took and a right/wrong tally for the
  * live test. Nothing is stored; the tally resets when the page reloads.
+ *
+ * When a scan fits several printings, the box shows them side by side. Tapping
+ * the one on the stream grades the scan right, prices that printing and labels
+ * the scan (text read + card id on the server, never the frame); Wrong grades it
+ * wrong.
  */
 
 import type { InboundMessage, OutboundMessage, ScanResultPayload } from './types';
@@ -51,6 +56,12 @@ const BOX_CSS = `
   button:hover { background: #3f3f46; }
   .tally { color: #a1a1aa; font-size: 12px; }
   .x { background: none; border: none; color: #71717a; padding: 0 2px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+  .pick { background: #18181b; border: 1px solid #3f3f46; border-radius: 6px; padding: 3px; cursor: pointer;
+    color: #a1a1aa; font-size: 10px; line-height: 1.2; text-align: center; }
+  .pick:hover { border-color: #f97316; }
+  .pick img { display: block; width: 100%; border-radius: 4px; margin-bottom: 2px; }
+  .box.wide { width: 360px; }
 `;
 
 function ensureBox(): ShadowRoot {
@@ -135,6 +146,79 @@ function renderResult(data: ScanResultPayload, seconds: number): void {
   );
 }
 
+type Candidate = NonNullable<ScanResultPayload['candidates']>[number];
+
+function renderPicker(data: ScanResultPayload, seconds: number): void {
+  const c = data.card;
+  const fast = seconds <= PASS_SECONDS;
+  const options = data.candidates ?? [];
+  const r = ensureBox();
+  const tiles = options
+    .map(
+      (o, i) => `<button class="pick" data-i="${i}">
+        ${o.image_url ? `<img src="${esc(o.image_url)}" alt="">` : ''}${esc(o.set_name ?? o.set_id)} #${esc(o.local_id)}</button>`,
+    )
+    .join('');
+  r.innerHTML = `<style>${BOX_CSS}</style><div class="box wide">
+    <div class="name">${esc(c.card_name)}</div>
+    <div class="sub">${data.printings ?? options.length} printings. Tap the one on the stream.</div>
+    <div class="grid">${tiles}</div>
+    <div class="row">
+      <span><button data-g="wrong">None of these</button></span>
+      <span class="time ${fast ? 'pass' : 'fail'}">${seconds.toFixed(1)}s</span>
+      <span class="tally">${tallyText()}</span>
+      <button class="x" data-g="close" title="Close">✕</button>
+    </div></div>`;
+
+  const grade = (right: boolean): void => {
+    if (right) tally.right += 1;
+    else tally.wrong += 1;
+    if (fast) tally.fast += 1;
+  };
+
+  r.querySelector<HTMLButtonElement>('button[data-g="close"]')!.addEventListener('click', () => host?.remove());
+  r.querySelector<HTMLButtonElement>('button[data-g="wrong"]')!.addEventListener('click', () => {
+    grade(false);
+    sendPick(data.scan_id, null);
+    renderMessage('Marked wrong.', false);
+  });
+  r.querySelectorAll<HTMLButtonElement>('button.pick').forEach((b) => {
+    b.addEventListener('click', () => {
+      const chosen = options[Number(b.dataset.i)];
+      grade(true);
+      renderPicked(c.card_name, chosen, null, true);
+      sendPick(data.scan_id, chosen.id, (pricing) => renderPicked(c.card_name, chosen, pricing, false));
+    });
+  });
+}
+
+function renderPicked(name: string, o: Candidate, pricing: ScanResultPayload['pricing'], loading: boolean): void {
+  const priceLine = loading
+    ? `<div class="sub">Pricing...</div>`
+    : pricing
+      ? `<div class="price">${money(pricing.avg_sold_price)}</div><div class="attr">${esc(pricing.attribution)}</div>`
+      : `<div class="unsure">No price for this printing</div>`;
+  render(
+    `<div class="name">${esc(name)}</div>
+     <div class="sub"><b>Picked: ${esc(o.set_name ?? o.set_id)} #${esc(o.local_id)}</b></div>
+     ${o.image_url ? `<img class="card" src="${esc(o.image_url)}" alt="Picked card">` : ''}
+     ${priceLine}`,
+    null,
+  );
+}
+
+function sendPick(
+  scanId: string,
+  cardId: string | null,
+  onPriced?: (pricing: ScanResultPayload['pricing']) => void,
+): void {
+  const msg: InboundMessage = { type: 'PICK_PRINTING', scanId, cardId };
+  chrome.runtime.sendMessage(msg, (response: OutboundMessage | undefined) => {
+    if (response?.type === 'PICK_RESULT') onPriced?.(response.pricing);
+    else if (response?.type === 'SCAN_ERROR') renderMessage(`Pick not saved: ${response.message}`, true);
+  });
+}
+
 function renderMessage(text: string, isError: boolean): void {
   render(`<div class="${isError ? 'err' : 'name'}">${esc(text)}</div>`, null);
 }
@@ -202,7 +286,8 @@ function captureFrame(): void {
     }
     switch (response.type) {
       case 'SCAN_RESULT':
-        renderResult(response.data, seconds);
+        if (response.data.candidates && response.data.candidates.length > 1) renderPicker(response.data, seconds);
+        else renderResult(response.data, seconds);
         break;
       case 'AUTH_REQUIRED':
         renderMessage('Sign in first: click the CardSnap icon in the toolbar.', true);

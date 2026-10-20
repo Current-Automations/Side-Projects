@@ -27,7 +27,7 @@ import { ApiErrorCode } from '@/lib/types/api';
 import { ScanRequestSchema } from '@/lib/types/api';
 import type { ApiErrorCodeValue } from '@/lib/types/api';
 import { buildQuery, getPriceWithCache } from '@/lib/pricing';
-import { cardImageUrl, findStampedReprint, getSetName } from '@/lib/catalog';
+import { cardImageUrl, findStampedReprint, getSetName, getSetNames } from '@/lib/catalog';
 import { catalogSnapshotPrice } from '@/lib/pricing/catalog-snapshot';
 
 const MODEL_USED = 'gpt-4o';
@@ -37,6 +37,11 @@ const MODEL_USED = 'gpt-4o';
 const ScanRouteRequestSchema = ScanRequestSchema.extend({
   userId: z.string().uuid('userId must be a valid user id'),
 });
+
+/** The saved snapshot only has raw prices; on a slab, say so rather than pass it off as the grade's. */
+function rawLabel<T extends { attribution: string }>(p: T | null, isGraded: boolean): T | null {
+  return p && isGraded ? { ...p, attribution: `${p.attribution}, raw price, grade not priced` } : p;
+}
 
 function errorResponse(error: string, code: ApiErrorCodeValue, status: number): Response {
   return Response.json({ success: false, error, code }, { status });
@@ -120,6 +125,8 @@ export async function POST(request: Request): Promise<Response> {
     tcgdex_id: matchedCard?.id,
     finish: identification.data.finish,
     is_graded: identification.data.is_graded,
+    grade_company: identification.data.grade_company,
+    grade_value: identification.data.grade_value,
   });
   if (!priceResult.success) {
     console.warn(`[scan] pricing unavailable: ${priceResult.error}`);
@@ -128,7 +135,7 @@ export async function POST(request: Request): Promise<Response> {
   const pricing = priceResult.success
     ? priceResult.data.pricing
     : matchedCard && !ambiguous
-      ? catalogSnapshotPrice(matchedCard, identification.data.finish)
+      ? rawLabel(catalogSnapshotPrice(matchedCard, identification.data.finish), identification.data.is_graded)
       : null;
   const trend = priceResult.success ? priceResult.data.trend : null;
   const pricingCacheHit = priceResult.success ? priceResult.data.cacheHit : false;
@@ -147,6 +154,19 @@ export async function POST(request: Request): Promise<Response> {
   if (!logResult.success) {
     return errorResponse(logResult.error, ApiErrorCode.DB_ERROR, 500);
   }
+
+  // The picker's options: each printing with its set name and picture.
+  const setNames = ambiguous ? await getSetNames(matched.data.candidates.map((c) => c.set_id)) : new Map<string, string>();
+  const candidates = ambiguous
+    ? matched.data.candidates.map((c) => ({
+        id: c.id,
+        name: c.name,
+        set_id: c.set_id,
+        set_name: setNames.get(c.set_id) ?? null,
+        local_id: c.local_id,
+        image_url: cardImageUrl(c.image_base_url, 'low', 'webp'),
+      }))
+    : [];
 
   // 8. Return identity + pricing.
   // remaining came from checkScanAllowed (pre-increment), so subtract this scan.
@@ -175,6 +195,7 @@ export async function POST(request: Request): Promise<Response> {
       stamped_reprint: stampedReprint,
       needs_confirmation: matched.data.needsConfirmation || identification.data.needs_confirmation,
       printings: matched.data.printings,
+      candidates,
     },
   });
 }
