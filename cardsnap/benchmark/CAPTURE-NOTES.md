@@ -1,7 +1,7 @@
 # Benchmark capture notes — 2026-09-08 session
 
 Seven OBS screen-recordings of live Whatnot streams, recorded ~00:21–00:27.
-Raw clips in `C:\Users\Jarre\Videos\2026-09-08 00-*.mp4` (not committed).
+Raw clips in a local videos folder (`2026-09-08 00-*.mp4`) (not committed).
 Frames pulled at 2 fps into `benchmark/frames/` as `c<clip>-<seq>.jpg`.
 Contact sheets (1 fps, straight from the video) in `benchmark/_raw/sheets/`.
 
@@ -134,7 +134,7 @@ Whatnot's terms bar "any manual process to monitor or copy any of the material
 on the App" without their written consent, and any automated use or scraping.
 So no more OBS recordings of other sellers, manual or automated, and the
 15-20 seller plan above is dropped. The 9 clips already on disk stay local and
-are used for testing only. New training footage is cards Jarrett owns, filmed
+are used for testing only. New training footage is cards the owner owns, filmed
 by him on his phone in several lighting and background setups. YouTube and
 TikTok footage is out for the same reason (both terms bar downloading and
 scrapers). Grill notes: `Atlas/Brainstorms/Projects/CardSnap/2026-09-25-cardsnap-data-shops-investors.md`
