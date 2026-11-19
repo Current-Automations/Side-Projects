@@ -5,11 +5,10 @@ site repo.
 
 ## Contents
 
-- **`job_scout/`** — a daily job-search automation: finds matching postings,
-  de-duplicates them, and drafts a tailored resume + cover letter per new job,
-  logging each to Notion for human review (no auto-apply). See
-  [`job_scout/README.md`](job_scout/README.md) and
-  [`job_scout/ROUTINE_PROMPT.md`](job_scout/ROUTINE_PROMPT.md).
+- **`job_scout/`**: a daily job-search automation that finds matching postings,
+  removes duplicates and logs each one for review (never applies). The folder
+  keeps the first two versions; the live one is now a Claude skill. See
+  [`job_scout/README.md`](job_scout/README.md).
 - **`audiobook_pipeline/`**: turns an EPUB into a chapter-tagged m4b with local
   Kokoro text-to-speech, plus a path for repackaging already-narrated YouTube
   playlists. See [`audiobook_pipeline/README.md`](audiobook_pipeline/README.md).

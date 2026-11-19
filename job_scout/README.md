@@ -1,8 +1,25 @@
 # Job Scout
 
+**Status: this folder is the history of the build, not the live version.**
+
+Job Scout finds jobs that fit a set of rules, removes duplicates, and logs each one for a person to review. It never applies to anything. It went through three versions:
+
+1. **A TypeScript routine** (the `.ts` files here): gather jobs, dedupe on a stable job id, draft a tailored resume and cover letter, and log to Notion through its API.
+2. **Two Claude routine prompts** (`SCOUT_PROMPT.md` finds and logs to Notion, `GENERATE_PROMPT.md` drafts documents only for jobs marked approved).
+3. **Now:** a Claude skill run weekdays at 7:17am as a cloud routine. Strict gates (location, posted in the last 14 days, junior level, no co-ops), one plain markdown file per job in a private notes vault, and no auto-drafted resumes: cover letters are written by hand for the jobs worth applying to.
+
+Why it got simpler: Notion and Google Docs were extra moving parts that could break, and auto-drafted resumes weren't ones I would actually send. Plain files are easier for both me and Claude to read.
+
+`base_resume.json` is a sample with the contact details replaced.
+
+---
+
+## Version 1 design notes (archived)
+
+
 A daily routine that finds a few new jobs matching your criteria, makes sure
 they aren't duplicates, and for each new one drafts a **tailored resume**, a
-**tailored cover letter**, and a **tracker log entry** — then stops. You stay
+**tailored cover letter**, and a **tracker log entry**, then stops. You stay
 human-in-the-loop: nothing is ever submitted automatically.
 
 > Design principle throughout: **simple, serial, boring, robust.** Every piece
@@ -10,7 +27,7 @@ human-in-the-loop: nothing is ever submitted automatically.
 
 ---
 
-## TL;DR — what runs
+## TL;DR, what runs
 
 | Command | What it does |
 |---|---|
@@ -22,28 +39,28 @@ Defaults (all configurable in `.env`): **N = 3 jobs/day**, **tracker = Notion**
 
 ---
 
-## Stage 1 — Tracker schema & storage
+## Stage 1, Tracker schema & storage
 
 ### Tracker: **Notion** (chosen)
 
 Notion is the tracker for this build. Its big edge is the **human-in-the-loop
-review UX** — a board grouped by status, the resume + cover letter right in the
+review UX**, a board grouped by status, the resume + cover letter right in the
 page body, and one-click status changes are exactly what the daily review loop
 needs.
 
 The daily routine reads/writes the database via the **Notion API** using an
-integration token (`NOTION_TOKEN`, set as a routine environment variable — see
+integration token (`NOTION_TOKEN`, set as a routine environment variable, see
 `ROUTINE_PROMPT.md`). We use the API rather than the managed Notion connector
 because the connector's approval gate blocks unattended routine runs; the token
 path is deterministic. The `JsonFileTracker` in `tracker.ts` is only a
 local-testing convenience for the standalone scripts. The Google Sheets header
 row below is kept as an alternative if you ever change your mind.
 
-### Fields (single source of truth — matches `types.ts` `JobRecord`)
+### Fields (single source of truth, matches `types.ts` `JobRecord`)
 
 | Field | Type | Notes |
 |---|---|---|
-| `job_id` | string | **Stable id** — see Stage 4. Keep it in column A. |
+| `job_id` | string | **Stable id**, see Stage 4. Keep it in column A. |
 | `company` | string | |
 | `job_title` | string | |
 | `location` | string | |
@@ -64,7 +81,7 @@ Create a database named **Job Scout** with these properties:
 
 | Property | Type | Notes |
 |---|---|---|
-| **Name** | Title | Notion requires one Title. Set it to `Company — Job Title` so cards read nicely. |
+| **Name** | Title | Notion requires one Title. Set it to `Company, Job Title` so cards read nicely. |
 | **Job ID** | Text | The stable dedup key (`url_…` / `key_…`). The routine checks this before adding anything. |
 | **Company** | Text | |
 | **Job Title** | Text | |
@@ -73,7 +90,7 @@ Create a database named **Job Scout** with these properties:
 | **Status** | Select | `new`, `docs_generated`, `needs_review`, `approved`, `applied`, `rejected`, `skipped` |
 | **Job URL** | URL | |
 | **Posted Date** | Date | |
-| **Resume Doc** | URL | Link to the Google Doc (optional — the text also goes in the page body). |
+| **Resume Doc** | URL | Link to the Google Doc (optional, the text also goes in the page body). |
 | **Cover Letter Doc** | URL | Link to the Google Doc (optional). |
 | **Notes** | Text | |
 | **Raw Description** | Text | Full JD, so a job can be re-tailored later. |
@@ -86,15 +103,15 @@ skipped = brown. The routine writes the tailored resume + cover letter into the
 **page body**, so you review everything inside the job's Notion page.
 
 **Views:**
-- `Needs Review` — filter `Status = needs_review`, sorted by First Seen ↓ (your daily work queue).
-- `Approved` — filter `Status = approved` (the jobs you've green-lit).
-- `Pipeline` — Board view grouped by `Status`.
-- `All` — table, default.
+- `Needs Review`, filter `Status = needs_review`, sorted by First Seen ↓ (your daily work queue).
+- `Approved`, filter `Status = approved` (the jobs you've green-lit).
+- `Pipeline`, Board view grouped by `Status`.
+- `All`, table, default.
 
 ### Google Sheets header row (fallback option)
 
 If you ever prefer Sheets, put this as **row 1** in a tab named `Jobs` (column
-order is significant — the code reads/writes by position):
+order is significant, the code reads/writes by position):
 
 ```
 job_id	company	job_title	location	source	status	job_url	posted_date	resume_doc_url	cover_letter_doc_url	notes	raw_description	first_seen_at	last_seen_at
@@ -105,24 +122,24 @@ Recommended sheet setup: freeze row 1, then create filter views for
 
 ---
 
-## Stage 2 — Base resume representation
+## Stage 2, Base resume representation
 
 ### Choice: **structured JSON** (`base_resume.json`)
 
 Why JSON over a Markdown template: the tailoring step has to **filter and
 reorder** bullets, skills, and projects by relevance. With structured data
 that's a few lines of deterministic scoring (`tailor_resume.ts`). With free-form
-Markdown you'd be parsing prose with regexes — fragile and exactly the
+Markdown you'd be parsing prose with regexes, fragile and exactly the
 complexity we're avoiding. JSON in, tailored JSON out, then Claude turns it into
 polished Markdown prose.
 
-- **`base_resume.json`** — fill in your real content (placeholders are marked with `//`). The `tags` arrays are what tailoring keys off — keep them lowercase and consistent.
-- **`tailorBaseResume(base, { emphasize })`** in `tailor_resume.ts` — fully implemented, pure, testable: scores each bullet/skill/project against the emphasis terms, reorders highest-relevance first, and trims weak content. No network calls.
-- **`loadBaseResume()`** — reads and parses the file.
+- **`base_resume.json`**, fill in your real content (placeholders are marked with `//`). The `tags` arrays are what tailoring keys off, keep them lowercase and consistent.
+- **`tailorBaseResume(base, { emphasize })`** in `tailor_resume.ts`, fully implemented, pure, testable: scores each bullet/skill/project against the emphasis terms, reorders highest-relevance first, and trims weak content. No network calls.
+- **`loadBaseResume()`**, reads and parses the file.
 
 ---
 
-## Stage 3 — Tailoring prompt templates
+## Stage 3, Tailoring prompt templates
 
 Two reusable prompts, available both as standalone files (for pasting into a
 Claude Code chat) and as prompt-builders in code:
@@ -139,22 +156,22 @@ The cover-letter path auto-selects the most relevant anecdote from
 
 Both `TAILOR_RESUME()` and `WRITE_COVER_LETTER()` build the full prompt today;
 the single remaining step is wiring the Anthropic SDK call (one `messages.create`
-— the exact snippet is in `tailor_resume.ts`).
+- the exact snippet is in `tailor_resume.ts`).
 
 ---
 
-## Stage 4 — Job ingestion & de-duplication
+## Stage 4, Job ingestion & de-duplication
 
 ### Source patterns
 
-1. **Job-board connectors (`board`)** — what the scheduled routine uses (see
+1. **Job-board connectors (`board`)**, what the scheduled routine uses (see
    [`ROUTINE_PROMPT.md`](./ROUTINE_PROMPT.md)): the agent searches Indeed /
    ZipRecruiter each day and fetches full job descriptions. Plain Web Search is
    only a backup, since it returns aggregator listing pages without usable JD text.
-2. **Manual drop (`manual`)** — for the standalone scripts / local testing. Drop
+2. **Manual drop (`manual`)**, for the standalone scripts / local testing. Drop
    a `*.job.json` file (see `inbox/EXAMPLE.job.json`) into `./inbox`; the script
    ingests it and moves it to `inbox/processed/`.
-3. **(Later) Board scraping / APIs** — add a reader that returns `ParsedJob[]`.
+3. **(Later) Board scraping / APIs**, add a reader that returns `ParsedJob[]`.
    Everything downstream is identical.
 
 ### Stable `job_id` (fully implemented in `computeJobId()`)
@@ -177,7 +194,7 @@ seen via two different tracking links still collapses to one id.
 
 ---
 
-## Stage 5 — Daily routine
+## Stage 5, Daily routine
 
 **The real routine is the scheduled Claude Code agent** running
 [`ROUTINE_PROMPT.md`](./ROUTINE_PROMPT.md): web-search for jobs → dedup against
@@ -187,7 +204,7 @@ extras are logged as `new` for a later run.
 
 `run_daily_job_scout.ts` is a **standalone mirror** of the same flow for local
 testing (inbox source, JSON tracker, local Markdown docs). Its prose-generation
-wrappers throw unless you wire the Anthropic SDK — the scheduled agent doesn't
+wrappers throw unless you wire the Anthropic SDK, the scheduled agent doesn't
 need that because it *is* Claude.
 
 ### Where docs are stored
@@ -201,12 +218,12 @@ need that because it *is* Claude.
 ### Daily summary (example output)
 
 ```
-=== Job Scout — daily summary ===
+=== Job Scout, daily summary ===
 Found 3 new job(s). Tailored docs generated for 2. 1 duplicate(s) skipped.
-  • Acme Corp — Automation Engineer
+  • Acme Corp, Automation Engineer
       resume: file:///.../output/acme-corp-automation-engineer-resume.resume.md
       cover:  file:///.../output/acme-corp-automation-engineer-cover-letter.cover_letter.md
-  • Globex — Integrations Developer
+  • Globex, Integrations Developer
       ...
   Tracker: ./tracker.local.json
 Next: review the docs, then set status to "approved" for the ones you want to pursue.
@@ -214,7 +231,7 @@ Next: review the docs, then set status to "approved" for the ones you want to pu
 
 ---
 
-## Stage 6 — Human-in-the-loop flow
+## Stage 6, Human-in-the-loop flow
 
 ### State machine (enforced in code by `canTransition()`)
 
@@ -232,7 +249,7 @@ new ──► docs_generated ──► needs_review ──► approved ──►
 - `approved → applied` is **your** action after you submit by hand.
 - `… → skipped` / `→ rejected` available at the appropriate stages.
 
-Illegal jumps (e.g. `new → applied`) throw — the tracker refuses them.
+Illegal jumps (e.g. `new → applied`) throw, the tracker refuses them.
 
 ### Your workflow
 
@@ -244,7 +261,7 @@ Illegal jumps (e.g. `new → applied`) throw — the tracker refuses them.
 ### `APPLY_READY_JOBS` (`apply_ready_jobs.ts`)
 
 Reads `status = approved`, prints a checklist with apply URL, resume link, cover
-link, and any notes. **It does not submit forms and does not change status** —
+link, and any notes. **It does not submit forms and does not change status** -
 after you apply, you flip `approved → applied` yourself (or call the optional
 `markApplied(job_id)` helper).
 
@@ -261,15 +278,15 @@ Region (onsite/hybrid) + remote-in-Canada**. Edit those lines in
 
 ---
 
-## Stage 7 — Implementation plan for Claude Code
+## Stage 7, Implementation plan for Claude Code
 
 ### What lives where
 
 | Part | Form | Why |
 |---|---|---|
 | The daily run (search → dedup → tailor → log to Notion) | **Scheduled Claude Code routine** (`ROUTINE_PROMPT.md`) | The agent does the work directly via connectors; no servers or keys to babysit. |
-| Resume/cover-letter prose generation | **The routine agent itself** | It's already Claude — it writes the prose; no separate API call. |
-| Job finding, tracker, doc storage | **Connectors** (Web Search, Notion, optional Google Docs) | Account-level — no API keys in the repo. |
+| Resume/cover-letter prose generation | **The routine agent itself** | It's already Claude, it writes the prose; no separate API call. |
+| Job finding, tracker, doc storage | **Connectors** (Web Search, Notion, optional Google Docs) | Account-level, no API keys in the repo. |
 | Resume reorder, job_id, dedup, prompt builders, state machine | **TS helpers** (`prompts/` + this folder) | Deterministic reference logic and the prompt templates the routine follows; also runnable standalone. |
 
 ### Directory structure (as built)
@@ -304,7 +321,7 @@ job_scout/
 
 - **The routine** (the real thing): **no API keys.** It runs inside Claude Code
   with the Notion + Web Search connectors and reads this repo directly.
-- **Standalone scripts** (optional, local testing): the pure helpers run now —
+- **Standalone scripts** (optional, local testing): the pure helpers run now -
   `tailorBaseResume`, `computeJobId`/dedup, `JsonFileTracker`, local Markdown
   docs, the apply checklist, the inbox reader. The two prose wrappers
   (`TAILOR_RESUME` / `WRITE_COVER_LETTER`) throw unless you add the Anthropic SDK,
@@ -319,7 +336,7 @@ job_scout/
    (notion.so/my-integrations), **share the database with it**, and set its secret
    as the routine env var `NOTION_TOKEN`. Add `api.notion.com` to the routine's
    allowed domains. (Full steps in `ROUTINE_PROMPT.md`.)
-3. **Resume + story bank** — already filled in with your real content
+3. **Resume + story bank**, already filled in with your real content
    (`base_resume.json`, `story_bank.json`). The routine reads them from the repo each run.
 4. **Enable connectors on the scheduled routine:** Indeed and/or ZipRecruiter +
    Web Search (sourcing), Google Drive/Docs (optional, for linked Google Docs).
@@ -333,5 +350,5 @@ job_scout/
 *(Optional, for local testing only:* `npm install`, then `npm run scout` against
 `*.job.json` files in `inbox/`. Pure helpers work as-is; wire the Anthropic SDK
 into the two prose wrappers if you want full standalone generation. On
-Windows/PowerShell, npm may be blocked — use the node-direct invocation from the
+Windows/PowerShell, npm may be blocked, use the node-direct invocation from the
 repo root `CLAUDE.md`.*)*
