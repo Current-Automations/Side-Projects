@@ -1,0 +1,28 @@
+mic: ""
+model: deepdml/faster-whisper-large-v3-turbo-ct2
+compute_type: int8_float16
+language: en
+dictionary: dictionary.txt
+min_seconds: 0.3
+idle_unload_seconds: 600
+history_keep: 200
+
+cleanup:
+  enabled: true
+  model: hf.co/unsloth/Qwen3.5-4B-GGUF:Q4_K_M
+  keep_alive: 10m
+  timeout: 20
+  length_ratio: [0.45, 1.25]
+
+profiles:
+  terminal: [WindowsTerminal.exe, powershell.exe, pwsh.exe, cmd.exe, Code.exe, Claude.exe]
+  notes: [Obsidian.exe]
+  discord: [Discord.exe]
+  browser: [chrome.exe, msedge.exe, firefox.exe, brave.exe]
+
+tones:
+  terminal: Talking to an AI coding assistant. Plain and direct, keep technical terms, file names and commands exactly as said. Normal sentences.
+  notes: Personal notes and journaling. Full sentences, proper punctuation, break into paragraphs where the topic changes.
+  discord: Casual chat. Keep slang and swearing, lowercase is fine, no period at the end of a single sentence.
+  browser: Clean and neutral, like an email or a web form. Full sentences, proper punctuation.
+  default: Clean and neutral. Full sentences, proper punctuation.

@@ -1,0 +1,4 @@
+{
+  "Example Show": "https://example.com/feed.xml",
+  "Show With Two Feeds": ["https://example.com/a.xml", "https://example.com/b.xml"]
+}
